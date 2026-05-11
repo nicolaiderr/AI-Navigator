@@ -2,255 +2,1384 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KI-Navigator — Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KI-Navigator">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0e0f11">
+<link rel="manifest" href="manifest.json">
+<title>KI-Förder-Navigator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
+
+:root {
+  --bg: #0e0f11;
+  --bg2: #15171a;
+  --bg3: #1c1f24;
+  --bg4: #22262d;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text: #f0ede8;
+  --text2: #9a9590;
+  --text3: #5c5854;
+  --gold: #c8a96e;
+  --gold2: #e8c98e;
+  --gold-bg: rgba(200,169,110,0.10);
+  --gold-border: rgba(200,169,110,0.25);
+  --green: #5d9e6e;
+  --green-bg: rgba(93,158,110,0.12);
+  --amber: #d4954a;
+  --amber-bg: rgba(212,149,74,0.12);
+  --red: #c0504a;
+  --red-bg: rgba(192,80,74,0.12);
+  --blue: #4a7fc0;
+  --blue-bg: rgba(74,127,192,0.12);
+  --r: 12px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ─── SHELL ─────────────────────────────────────────────────────────────── */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* ─── TOP BAR ───────────────────────────────────────────────────────────── */
+.topbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: calc(var(--safe-top) + 14px) 20px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.topbar-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  color: var(--gold);
+  letter-spacing: -0.01em;
+}
+.topbar-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.score-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 6px 12px;
+}
+.score-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  color: var(--gold);
+  line-height: 1;
+}
+.score-lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; }
+
+/* ─── CONTENT ───────────────────────────────────────────────────────────── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── BOTTOM NAV ────────────────────────────────────────────────────────── */
+.bottomnav {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: var(--safe-bot);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.bn-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 4px;
+  gap: 4px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--text3);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  transition: color .2s;
+  position: relative;
+}
+.bn-item.active { color: var(--gold); }
+.bn-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 0 0 2px 2px;
+}
+.bn-icon { width: 22px; height: 22px; }
+
+/* ─── PAGE ──────────────────────────────────────────────────────────────── */
+.page { display: none; padding: 20px 16px 100px; animation: fadeUp .2s ease; }
+.page.active { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.page-head { margin-bottom: 20px; }
+.page-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text); }
+.page-sub { font-size: 12px; color: var(--text2); margin-top: 4px; line-height: 1.5; }
+
+/* ─── CARDS ─────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px;
+  margin-bottom: 14px;
+}
+.card-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 16px;
+}
+
+/* ─── FORM ELEMENTS ─────────────────────────────────────────────────────── */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text2);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.form-label em { color: var(--gold); font-style: normal; }
+
+input[type=text], input[type=number], select, textarea {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color .15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235c5854' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+select option { background: #1c1f24; }
+textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+
+/* ─── CHECKBOX GRID ─────────────────────────────────────────────────────── */
+.checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text2);
+  user-select: none;
+  transition: all .15s;
+}
+.checkbox-item input { display: none; }
+.checkbox-item.checked { border-color: var(--gold); color: var(--gold); background: var(--gold-bg); }
+.cb-dot {
+  width: 16px; height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--text3);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.checkbox-item.checked .cb-dot { background: var(--gold); border-color: var(--gold); }
+.cb-check { display: none; color: #0e0f11; font-size: 10px; font-weight: 700; }
+.checkbox-item.checked .cb-check { display: block; }
+
+/* ─── BUTTONS ───────────────────────────────────────────────────────────── */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all .15s;
+  margin-bottom: 10px;
+}
+.btn-primary { background: var(--gold); color: #0e0f11; }
+.btn-primary:active { background: var(--gold2); transform: scale(.98); }
+.btn-secondary { background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); }
+.btn-secondary:active { background: var(--bg4); }
+.btn-green { background: var(--green-bg); color: #7ec88e; border: 1px solid rgba(93,158,110,.3); }
+
+/* ─── ANALYSE CARDS ─────────────────────────────────────────────────────── */
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.kpi-card {
+  background: linear-gradient(135deg, var(--bg3), var(--bg2));
+  border: 1px solid var(--gold-border);
+  border-radius: var(--r);
+  padding: 16px;
+  text-align: center;
+}
+.kpi-val { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--gold); line-height: 1; }
+.kpi-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; margin-top: 5px; }
+
+.prog-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.prog-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+.prog-title { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.4; }
+.prog-traeger { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.prog-amount { font-size: 18px; font-weight: 600; color: var(--gold); white-space: nowrap; }
+.prog-bar { height: 3px; background: var(--border2); border-radius: 2px; overflow: hidden; margin-bottom: 10px; }
+.prog-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--gold), var(--green)); }
+.prog-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.badge {
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+.badge-eu { background: var(--blue-bg); color: #7aaddf; border: 1px solid rgba(74,127,192,.25); }
+.badge-bund { background: var(--green-bg); color: #7ec88e; border: 1px solid rgba(93,158,110,.25); }
+.badge-land { background: var(--amber-bg); color: #e8b06a; border: 1px solid rgba(212,149,74,.3); }
+.badge-steuer { background: rgba(160,100,200,.12); color: #c090e0; border: 1px solid rgba(160,100,200,.25); }
+.badge-hoch { background: rgba(93,158,110,.15); color: #7ec88e; border: 1px solid rgba(93,158,110,.3); }
+.badge-mittel { background: var(--amber-bg); color: #e8b06a; border: 1px solid rgba(212,149,74,.3); }
+.prog-action {
+  padding: 10px 12px;
+  background: var(--gold-bg);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 6px 6px 0;
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.5;
+}
+
+/* ─── ALERTS ────────────────────────────────────────────────────────────── */
+.alert {
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+.alert-warn { background: var(--amber-bg); border: 1px solid rgba(212,149,74,.25); color: #e8b06a; }
+.alert-info { background: var(--blue-bg); border: 1px solid rgba(74,127,192,.25); color: #7aaddf; }
+.alert-ok { background: var(--green-bg); border: 1px solid rgba(93,158,110,.25); color: #7ec88e; }
+.alert-red { background: var(--red-bg); border: 1px solid rgba(192,80,74,.25); color: #e08080; }
+
+/* ─── CHECKLIST ─────────────────────────────────────────────────────────── */
+.check-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+  font-size: 13px;
+  color: var(--text2);
+}
+.check-item:last-child { border-bottom: none; }
+.ci {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.ci-ok { background: var(--green-bg); color: var(--green); border: 1px solid rgba(93,158,110,.3); }
+.ci-warn { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(212,149,74,.3); }
+.ci-err { background: var(--red-bg); color: var(--red); border: 1px solid rgba(192,80,74,.3); }
+.check-text strong { color: var(--text); }
+.check-hint { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+/* ─── REPORT ────────────────────────────────────────────────────────────── */
+.report-hero {
+  background: linear-gradient(135deg, #1B3A5C, #2E6DA4);
+  border-radius: var(--r);
+  padding: 22px;
+  margin-bottom: 16px;
+}
+.report-co { font-size: 20px; font-weight: 600; margin-bottom: 3px; }
+.report-meta { font-size: 12px; color: rgba(255,255,255,.65); margin-bottom: 16px; }
+.report-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.rm-box {
+  background: rgba(255,255,255,.1);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+.rm-val { font-size: 16px; font-weight: 600; color: var(--gold); }
+.rm-lbl { font-size: 9px; color: rgba(255,255,255,.55); margin-top: 3px; text-transform: uppercase; letter-spacing: .06em; }
+
+.rs-section { margin-bottom: 18px; }
+.rs-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.rs-num {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--gold-bg);
+  border: 1px solid var(--gold-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: var(--gold);
+  flex-shrink: 0;
+}
+.rs-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.rs-row:last-child { border-bottom: none; }
+.rs-key { color: var(--text3); flex: 0 0 140px; }
+.rs-val { color: var(--text); font-weight: 500; text-align: right; }
+
+/* ─── ANTRÄGE ───────────────────────────────────────────────────────────── */
+.antrag-card {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 18px;
+  margin-bottom: 14px;
+}
+.ac-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.ac-title { font-size: 15px; font-weight: 500; color: var(--text); line-height: 1.4; }
+.ac-traeger { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.ac-amount { font-size: 18px; font-weight: 600; color: var(--gold); white-space: nowrap; }
+.ac-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; padding: 12px; background: var(--bg3); border-radius: 8px; }
+.ac-meta-item label { font-size: 9px; color: var(--text3); display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: .06em; }
+.ac-meta-item span { font-size: 12px; color: var(--text); font-weight: 500; }
+.ac-meta-item span.acc { color: var(--gold); }
+.ac-steps { margin-bottom: 14px; }
+.ac-step {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.5;
+}
+.ac-step:last-child { border-bottom: none; }
+.ac-step-num {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--gold-bg);
+  border: 1px solid var(--gold-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: var(--gold);
+  flex-shrink: 0; margin-top: 1px;
+}
+
+/* ─── MISC ──────────────────────────────────────────────────────────────── */
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text3); font-size: 14px; line-height: 1.7; }
+.empty-icon { font-size: 40px; margin-bottom: 14px; }
+.divider { height: 1px; background: var(--border); margin: 4px 0 16px; }
+
+/* ─── INSTALL BANNER ────────────────────────────────────────────────────── */
+.install-banner {
+  background: linear-gradient(135deg, #1B3A5C, #2E6DA4);
+  margin: 0 0 16px;
+  border-radius: var(--r);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: rgba(255,255,255,.9);
+}
+.install-banner svg { flex-shrink: 0; }
+.install-banner strong { color: #fff; display: block; font-size: 14px; margin-bottom: 2px; }
+
+::-webkit-scrollbar { display: none; }
+
+/* ─── ADMIN MODULE ──────────────────────────────────────────────────────── */
+.admin-kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.admin-kpi { background: var(--bg3); border: 1px solid var(--border2); border-radius: 10px; padding: 14px; text-align: center; }
+.admin-kpi-val { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--gold); line-height: 1; }
+.admin-kpi-lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; margin-top: 4px; }
+.user-row { display: flex; flex-direction: column; gap: 4px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.user-row:last-child { border-bottom: none; }
+.user-row-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.user-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.user-email { font-size: 11px; color: var(--text3); }
+.user-row-actions { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.admin-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.admin-section-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.admin-tab { padding: 8px 14px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); }
+.admin-tab.active { background: var(--gold); color: #0e0f11; border-color: var(--gold); }
+.admin-sub-page { display: none; }
+.admin-sub-page.active { display: block; }
+#bn-admin { display: none; }
+
+
+/* ─── AI CHECK MODULE ───────────────────────────────────────────────────── */
+.compliance-hero {
+  background: linear-gradient(135deg, #1a1200, #2a1f00);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--r);
+  padding: 22px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.compliance-score-ring {
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  margin: 0 auto 14px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  position: relative;
+}
+.compliance-score-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 38px;
+  color: var(--gold);
+  line-height: 1;
+}
+.compliance-score-lbl {
+  font-size: 9px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-top: 3px;
+}
+.compliance-risk-badge {
+  display: inline-block;
+  padding: 5px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.risk-minimal  { background: rgba(93,158,110,.2);  color: #7ec88e; border: 1px solid rgba(93,158,110,.4); }
+.risk-begrenzt { background: rgba(74,127,192,.2);  color: #7aaddf; border: 1px solid rgba(74,127,192,.4); }
+.risk-hoch     { background: rgba(212,149,74,.2);  color: #e8b06a; border: 1px solid rgba(212,149,74,.4); }
+.risk-verboten { background: rgba(192,80,74,.25);  color: #e08080; border: 1px solid rgba(192,80,74,.5); }
+
+.article-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.article-row:last-child { border-bottom: none; }
+.art-status {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.art-ok     { background: var(--green-bg); color: var(--green); border: 1px solid rgba(93,158,110,.3); }
+.art-warn   { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(212,149,74,.3); }
+.art-crit   { background: var(--red-bg);   color: var(--red);   border: 1px solid rgba(192,80,74,.3); }
+.art-title  { font-weight: 500; color: var(--text); font-size: 13px; }
+.art-sub    { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+.action-card {
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border-left: 4px solid;
+}
+.action-sofort  { background: var(--red-bg);   border-color: var(--red); }
+.action-aug26   { background: var(--amber-bg); border-color: var(--amber); }
+.action-laufend { background: var(--blue-bg);  border-color: var(--blue); }
+.action-ok      { background: var(--green-bg); border-color: var(--green); }
+.action-deadline {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.action-sofort  .action-deadline { color: var(--red); }
+.action-aug26   .action-deadline { color: var(--amber); }
+.action-laufend .action-deadline { color: var(--blue); }
+.action-ok      .action-deadline { color: var(--green); }
+.action-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.action-desc  { font-size: 12px; color: var(--text2); line-height: 1.5; }
+.action-art   { font-size: 10px; color: var(--text3); margin-top: 5px; }
+
+.progress-bar-wrap { background: var(--border2); border-radius: 4px; height: 6px; overflow: hidden; margin: 8px 0 4px; }
+.progress-bar-fill { height: 100%; border-radius: 4px; transition: width .8s ease; }
+
+
+/* ─── AUTH SCREEN ───────────────────────────────────────────────────────── */
+.auth-overlay {
+  position: fixed; inset: 0;
+  background: var(--bg); z-index: 9999;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: calc(var(--safe-top) + 32px) 28px calc(var(--safe-bot) + 32px);
+  transition: opacity .3s;
+}
+.auth-overlay.hidden { opacity: 0; pointer-events: none; }
+.auth-logo { font-family: "DM Serif Display", serif; font-size: 30px; color: var(--gold); margin-bottom: 8px; text-align: center; line-height: 1.2; }
+.auth-sub { font-size: 12px; color: var(--text3); margin-bottom: 36px; text-align: center; line-height: 1.6; }
+.auth-form { width: 100%; max-width: 340px; }
+.auth-input-wrap { position: relative; margin-bottom: 14px; }
+.auth-input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 16px; pointer-events: none; }
+.auth-input { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: 10px; color: var(--text); font-family: "DM Sans", sans-serif; font-size: 15px; padding: 13px 14px 13px 42px; outline: none; -webkit-appearance: none; }
+.auth-input:focus { border-color: var(--gold); }
+.auth-btn { width: 100%; background: var(--gold); color: #0e0f11; border: none; border-radius: 10px; font-family: "DM Sans", sans-serif; font-size: 15px; font-weight: 600; padding: 14px; cursor: pointer; margin-top: 6px; transition: background .15s; }
+.auth-btn:active { background: var(--gold2); }
+.auth-btn:disabled { background: var(--bg4); color: var(--text3); cursor: not-allowed; }
+.auth-error { color: #e08080; font-size: 12px; text-align: center; margin-top: 10px; min-height: 18px; line-height: 1.5; }
+.auth-spinner { display: none; width: 20px; height: 20px; border: 2px solid rgba(14,15,17,.3); border-top-color: #0e0f11; border-radius: 50%; animation: spin .6s linear infinite; margin: 0 auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.license-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.badge-demo { background: var(--amber-bg); color: #e8b06a; border: 1px solid rgba(212,149,74,.3); }
+.badge-pro { background: var(--green-bg); color: #7ec88e; border: 1px solid rgba(93,158,110,.3); }
+.badge-enterprise { background: var(--blue-bg); color: #7aaddf; border: 1px solid rgba(74,127,192,.3); }
+.badge-expired { background: var(--red-bg); color: #e08080; border: 1px solid rgba(192,80,74,.3); }
+.license-expired-screen { text-align: center; padding: 60px 28px; }
+.license-expired-screen h2 { font-family: "DM Serif Display", serif; font-size: 24px; color: var(--text); margin-bottom: 12px; }
+.license-expired-screen p { font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 24px; }
+</style>
+
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#0e0f11;color:#f0ede8;min-height:100vh;font-size:14px}
-:root{
-  --gold:#c8a96e;--gold2:#e8c98e;--bg2:#15171a;--bg3:#1c1f24;--bg4:#22262d;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
-  --text2:#9a9590;--text3:#5c5854;
-  --green:#5d9e6e;--green-bg:rgba(93,158,110,0.12);
-  --amber:#d4954a;--amber-bg:rgba(212,149,74,0.12);
-  --red:#c0504a;--red-bg:rgba(192,80,74,0.12);
-  --blue:#4a7fc0;--blue-bg:rgba(74,127,192,0.12);
-}
-
-/* ─── AUTH ─── */
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px}
-.login-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:36px;width:100%;max-width:380px}
-.login-title{font-size:22px;font-weight:700;color:var(--gold);margin-bottom:4px}
-.login-sub{font-size:12px;color:var(--text3);margin-bottom:28px}
-
-/* ─── LAYOUT ─── */
-.shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
-.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:28px 16px}
-.sidebar-logo{font-size:16px;font-weight:700;color:var(--gold);margin-bottom:4px}
-.sidebar-sub{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:28px}
-.nav-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;border:none;background:none;width:100%;text-align:left;margin-bottom:4px}
-.nav-item:hover{background:var(--bg3);color:#f0ede8}
-.nav-item.active{background:rgba(200,169,110,.1);color:var(--gold)}
-.main{padding:36px 32px;overflow-y:auto}
-.page{display:none}.page.active{display:block}
-
-/* ─── COMPONENTS ─── */
-.page-title{font-size:24px;font-weight:700;color:#f0ede8;margin-bottom:6px}
-.page-sub{font-size:13px;color:var(--text2);margin-bottom:28px}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px}
-.card-title{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);margin-bottom:16px}
-input,select{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:#f0ede8;font-family:inherit;font-size:14px;padding:10px 13px;outline:none;width:100%}
-input:focus,select:focus{border-color:var(--gold)}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-.form-row.c3{grid-template-columns:1fr 1fr 1fr}
-.form-group label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s}
-.btn-primary{background:var(--gold);color:#0e0f11}
-.btn-primary:hover{background:var(--gold2)}
-.btn-secondary{background:var(--bg3);color:var(--text2);border:1px solid var(--border2)}
-.btn-secondary:hover{color:#f0ede8}
-.btn-danger{background:var(--red-bg);color:#e08080;border:1px solid rgba(192,80,74,.3)}
-.btn-danger:hover{background:rgba(192,80,74,.2)}
-.btn-sm{padding:6px 12px;font-size:12px}
-
-/* ─── TABLE ─── */
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse}
-th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border2);background:var(--bg3)}
-td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;color:#f0ede8}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(255,255,255,.02)}
-
-/* ─── BADGES ─── */
-.badge{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:500}
-.badge-demo{background:var(--amber-bg);color:#e8b06a;border:1px solid rgba(212,149,74,.3)}
-.badge-pro{background:var(--green-bg);color:#7ec88e;border:1px solid rgba(93,158,110,.3)}
-.badge-enterprise{background:var(--blue-bg);color:#7aaddf;border:1px solid rgba(74,127,192,.3)}
-.badge-active{background:var(--green-bg);color:#7ec88e}
-.badge-expired{background:var(--red-bg);color:#e08080}
-.badge-inactive{background:var(--bg4);color:var(--text3)}
-
-/* ─── KPI ─── */
-.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
-.kpi-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center}
-.kpi-val{font-size:32px;font-weight:700;color:var(--gold)}
-.kpi-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-top:4px}
-
-/* ─── ALERTS ─── */
-.alert{padding:12px 14px;border-radius:8px;font-size:13px;margin-bottom:14px}
-.alert-ok{background:var(--green-bg);border:1px solid rgba(93,158,110,.25);color:#7ec88e}
-.alert-err{background:var(--red-bg);border:1px solid rgba(192,80,74,.25);color:#e08080}
-.alert-info{background:var(--blue-bg);border:1px solid rgba(74,127,192,.25);color:#7aaddf}
-
-/* ─── MISC ─── */
-.logout-btn{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;cursor:pointer;color:var(--text3);font-size:12px;border:none;background:none;width:100%;margin-top:auto}
-.logout-btn:hover{color:#e08080;background:var(--red-bg)}
-.sidebar-inner{display:flex;flex-direction:column;height:100%}
-</style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="login-screen" class="login-wrap">
-  <div class="login-box">
-    <div class="login-title">Admin-Panel</div>
-    <div class="login-sub">KI-Förder-Navigator · Lizenzverwaltung</div>
-    <div class="form-group" style="margin-bottom:12px">
-      <label>E-Mail</label>
-      <input type="email" id="adm-email" placeholder="admin@ihre-domain.de" autocomplete="email">
+<!-- ═══ AUTH OVERLAY ═══ -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-logo">KI-Förder-<br>Navigator</div>
+  <div class="auth-sub">Bitte melden Sie sich an</div>
+  <div class="auth-form">
+    <div class="auth-input-wrap">
+      <span class="auth-input-icon">✉</span>
+      <input class="auth-input" type="email" id="auth-email" placeholder="E-Mail Adresse" autocomplete="email">
     </div>
-    <div class="form-group" style="margin-bottom:16px">
-      <label>Passwort</label>
-      <input type="password" id="adm-pw" autocomplete="current-password">
+    <div class="auth-input-wrap">
+      <span class="auth-input-icon">🔒</span>
+      <input class="auth-input" type="password" id="auth-pw" placeholder="Passwort" autocomplete="current-password">
     </div>
-    <button class="btn btn-primary" style="width:100%" onclick="adminLogin()">Anmelden</button>
-    <div id="login-err" style="color:#e08080;font-size:12px;text-align:center;margin-top:10px;min-height:18px"></div>
+    <button class="auth-btn" id="auth-btn" onclick="doLogin()">Anmelden</button>
+    <div id="auth-spinner" class="auth-spinner" style="margin-top:14px"></div>
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+  <div style="margin-top:36px;font-size:11px;color:var(--text3);text-align:center;line-height:1.7">
+    Lizenzen &amp; Zugänge: Kontaktieren Sie den Administrator<br>
+    <span style="color:var(--text3)">KI-Förder-Navigator 2026</span>
   </div>
 </div>
 
-<!-- MAIN APP -->
-<div id="admin-app" class="shell" style="display:none">
-  <aside class="sidebar">
-    <div class="sidebar-inner">
+<!-- ═══ LICENSE EXPIRED ═══ -->
+<div id="license-expired" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9998;padding:40px 28px">
+  <div class="license-expired-screen">
+    <div style="font-size:48px;margin-bottom:16px">⏱</div>
+    <h2>Lizenz abgelaufen</h2>
+    <p>Ihre Lizenz ist abgelaufen. Bitte wenden Sie sich an den Administrator, um Ihren Zugang zu verlängern.</p>
+    <button class="auth-btn" style="max-width:280px;margin:0 auto;display:block" onclick="doLogout()">Abmelden</button>
+  </div>
+</div>
+
+<div class="app" id="app-shell" style="display:none">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div>
+      <div class="topbar-title">KI-Förder-Navigator</div>
+      <div class="topbar-sub" id="tb-sub">Offline · 2026</div>
+    </div>
+    <div class="score-pill" id="score-pill" style="display:none">
       <div>
-        <div class="sidebar-logo">KI-Navigator</div>
-        <div class="sidebar-sub">Admin · <span id="adm-user-name">—</span></div>
-        <button class="nav-item active" onclick="showAdminPage('dashboard')">📊 Dashboard</button>
-        <button class="nav-item" onclick="showAdminPage('users')">👥 Nutzer &amp; Lizenzen</button>
-        <button class="nav-item" onclick="showAdminPage('new-user')">➕ Neuer Nutzer</button>
-        <button class="nav-item" onclick="showAdminPage('pricing')">💶 Preismodell</button>
-      </div>
-      <button class="logout-btn" onclick="adminLogout()">↩ Abmelden</button>
-    </div>
-  </aside>
-
-  <main class="main">
-
-    <!-- DASHBOARD -->
-    <div id="admin-page-dashboard" class="page active">
-      <div class="page-title">Dashboard</div>
-      <div class="page-sub">Übersicht aller aktiven Lizenzen</div>
-      <div class="kpi-row">
-        <div class="kpi-box"><div class="kpi-val" id="kpi-total">—</div><div class="kpi-lbl">Nutzer gesamt</div></div>
-        <div class="kpi-box"><div class="kpi-val" id="kpi-active">—</div><div class="kpi-lbl">Aktive Lizenzen</div></div>
-        <div class="kpi-box"><div class="kpi-val" id="kpi-expired">—</div><div class="kpi-lbl">Abgelaufen</div></div>
-        <div class="kpi-box"><div class="kpi-val" id="kpi-arr" style="font-size:22px">—</div><div class="kpi-lbl">Jahresumsatz (€)</div></div>
-      </div>
-      <div class="alert alert-info" id="expiry-warn" style="display:none"></div>
-      <div class="card">
-        <div class="card-title">Lizenz-Verteilung</div>
-        <div id="tier-dist" style="display:flex;gap:10px;flex-wrap:wrap"></div>
+        <div class="score-lbl">Score</div>
+        <div class="score-num" id="score-num">0</div>
       </div>
     </div>
+  </header>
 
-    <!-- USERS -->
-    <div id="admin-page-users" class="page">
-      <div class="page-title">Nutzer &amp; Lizenzen</div>
-      <div class="page-sub">Alle registrierten Nutzer verwalten</div>
-      <div id="users-alert"></div>
+  <!-- CONTENT -->
+  <div class="content" id="main-content">
+
+    <!-- ═══ SEITE 1: FIRMA ═══ -->
+    <div id="page-firma" class="page active">
+      <div class="page-head">
+        <div class="page-title">Unternehmen</div>
+        <div class="page-sub">Stammdaten fließen automatisch in alle Dokumente.</div>
+      </div>
+
+      <!-- iOS Install Hint -->
+      <div class="install-banner" id="install-hint" style="display:none">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M8 8l4-4 4 4M4 20h16"/></svg>
+        <div>
+          <strong>Zur App machen</strong>
+          Safari → Teilen → Zum Home-Bildschirm
+        </div>
+      </div>
+
       <div class="card">
-        <div class="table-wrap">
-          <table>
-            <thead><tr>
-              <th>Name / E-Mail</th>
-              <th>Tier</th>
-              <th>Status</th>
-              <th>Läuft ab</th>
-              <th>Aktionen</th>
-            </tr></thead>
-            <tbody id="users-table-body">
-              <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">Wird geladen...</td></tr>
-            </tbody>
-          </table>
+        <div class="card-title">Stammdaten</div>
+        <div class="form-group">
+          <label class="form-label">Unternehmensname <em>*</em></label>
+          <input type="text" id="f-name" placeholder="z. B. Müller Maschinenbau GmbH">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ansprechpartner</label>
+          <input type="text" id="f-ansprech" placeholder="z. B. Max Müller">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Position / Funktion</label>
+          <input type="text" id="f-position" placeholder="z. B. Geschäftsführer">
+        </div>
+        <div class="form-group">
+          <label class="form-label">PLZ und Ort</label>
+          <input type="text" id="f-plzort" placeholder="z. B. 64283 Darmstadt">
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-Mail</label>
+          <input type="text" id="f-email" placeholder="max@firma.de">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefon</label>
+          <input type="text" id="f-tel" placeholder="+49 6151 123456">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Klassifizierung</div>
+        <div class="form-group">
+          <label class="form-label">Bundesland <em>*</em></label>
+          <select id="f-bl">
+            <option value="">— auswählen —</option>
+            <option value="HE">Hessen</option>
+            <option value="BY">Bayern</option>
+            <option value="BW">Baden-Württemberg</option>
+            <option value="NW">Nordrhein-Westfalen</option>
+            <option value="NI">Niedersachsen</option>
+            <option value="BE">Berlin</option>
+            <option value="HH">Hamburg</option>
+            <option value="BB">Brandenburg</option>
+            <option value="SN">Sachsen</option>
+            <option value="RP">Rheinland-Pfalz</option>
+            <option value="SL">Saarland</option>
+            <option value="HB">Bremen</option>
+            <option value="MV">Mecklenburg-Vorpommern</option>
+            <option value="ST">Sachsen-Anhalt</option>
+            <option value="TH">Thüringen</option>
+            <option value="SH">Schleswig-Holstein</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Branche <em>*</em></label>
+          <select id="f-branche">
+            <option value="">— auswählen —</option>
+            <option>Produktion / Fertigung</option>
+            <option>Handel / E-Commerce</option>
+            <option>Gesundheit / Medizintechnik</option>
+            <option>IT / Software</option>
+            <option>Finanz / Versicherung / FinTech</option>
+            <option>Logistik / Transport</option>
+            <option>Energie / Umwelt</option>
+            <option>Bau / Immobilien</option>
+            <option>Landwirtschaft / Agrar</option>
+            <option>Bildung / Forschung</option>
+            <option>Sonstige Dienstleistungen</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rechtsform</label>
+          <select id="f-rf">
+            <option value="">— auswählen —</option>
+            <option>GmbH</option>
+            <option>AG</option>
+            <option>GmbH &amp; Co. KG</option>
+            <option>Einzelunternehmen</option>
+            <option>UG (haftungsbeschränkt)</option>
+            <option>OHG / KG</option>
+            <option>GbR</option>
+            <option>Freiberufler</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mitarbeiter <em>*</em></label>
+          <input type="number" id="f-ma" placeholder="z. B. 45" min="1" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jahresumsatz (Mio. EUR) <em>*</em></label>
+          <input type="number" id="f-um" placeholder="z. B. 8.5" step="0.1" min="0" inputmode="decimal">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gründungsjahr</label>
+          <input type="number" id="f-gj" placeholder="z. B. 2010" min="1900" max="2025" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">KI-Budget &amp; FuE</div>
+        <div class="form-group">
+          <label class="form-label">Geplantes KI-Budget (EUR) <em>*</em></label>
+          <input type="number" id="f-budget" placeholder="z. B. 150000" min="0" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Davon Personalkosten (EUR)</label>
+          <input type="number" id="f-personal" placeholder="z. B. 80000" min="0" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Eigene FuE-Abteilung</label>
+          <select id="f-fue">
+            <option value="Nein">Nein</option>
+            <option value="Ja, klein (1–3 Pers.)">Ja, klein (1–3 Pers.)</option>
+            <option value="Ja, mittel (4–10 Pers.)">Ja, mittel (4–10 Pers.)</option>
+            <option value="Ja, groß (10+ Pers.)">Ja, groß (10+ Pers.)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Steuernummer</label>
+          <input type="text" id="f-steuer" placeholder="z. B. 007/123/45678">
+        </div>
+        <div class="form-group">
+          <label class="form-label">IBAN</label>
+          <input type="text" id="f-iban" placeholder="DE12 3456 7890 1234 5678 90">
         </div>
       </div>
     </div>
 
-    <!-- NEW USER -->
-    <div id="admin-page-new-user" class="page">
-      <div class="page-title">Neuer Nutzer</div>
-      <div class="page-sub">Konto anlegen und Lizenz zuweisen</div>
-      <div id="new-user-alert"></div>
+    <!-- ═══ SEITE 2: KI-VORHABEN ═══ -->
+    <div id="page-ki" class="page">
+      <div class="page-head">
+        <div class="page-title">KI-Vorhaben</div>
+        <div class="page-sub">Wird automatisch in alle Antragsformulare übernommen.</div>
+      </div>
+
       <div class="card">
-        <div class="card-title">Nutzerdaten</div>
-        <div class="form-row">
-          <div class="form-group"><label>Vorname</label><input type="text" id="nu-fname" placeholder="Max"></div>
-          <div class="form-group"><label>Nachname</label><input type="text" id="nu-lname" placeholder="Müller"></div>
+        <div class="card-title">Projektbeschreibung</div>
+        <div class="form-group">
+          <label class="form-label">Projekttitel <em>*</em></label>
+          <input type="text" id="f-ptitel" placeholder="z. B. KI-gestütztes Predictive-Maintenance-System">
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>E-Mail *</label><input type="email" id="nu-email" placeholder="max@firma.de"></div>
-          <div class="form-group"><label>Temporäres Passwort *</label><input type="text" id="nu-pw" placeholder="Sicheres Passwort"></div>
+        <div class="form-group">
+          <label class="form-label">Kurzbeschreibung <em>*</em></label>
+          <textarea id="f-pkurz" placeholder="Was soll das KI-System leisten? Welches Problem löst es?"></textarea>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>Unternehmen</label><input type="text" id="nu-company" placeholder="Muster GmbH"></div>
-          <div class="form-group"><label>Telefon</label><input type="text" id="nu-tel" placeholder="+49 69 123456"></div>
+        <div class="form-group">
+          <label class="form-label">Ausgangssituation</label>
+          <textarea id="f-prob" placeholder="Aktueller Stand im Unternehmen, warum wird KI benötigt?"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Technischer Lösungsansatz</label>
+          <textarea id="f-loesung" placeholder="Wie funktioniert das KI-System? Welche Daten, welche Methode?"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Erwarteter Nutzen</label>
+          <textarea id="f-nutzen" placeholder="Welche messbaren Verbesserungen? (z. B. 30% weniger Ausfallzeiten)"></textarea>
         </div>
       </div>
+
       <div class="card">
-        <div class="card-title">Lizenz</div>
-        <div class="form-row c3">
+        <div class="card-title">Technische Einordnung</div>
+        <div class="form-group">
+          <label class="form-label">KI-Technologie</label>
+          <select id="f-kiTyp">
+            <option>Machine Learning / Predictive Analytics</option>
+            <option>NLP / Large Language Models</option>
+            <option>Computer Vision / Bildanalyse</option>
+            <option>Prozessautomatisierung (RPA + KI)</option>
+            <option>Generative KI (GenAI)</option>
+            <option>Hybrid / mehrere KI-Methoden</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Innovationsniveau</label>
+          <select id="f-inno">
+            <option value="anwendung">Anwendung bestehender KI-Tools</option>
+            <option value="anpassung">Anpassung / Fine-Tuning</option>
+            <option value="neuentwicklung">Neuentwicklung (eigener Algorithmus)</option>
+            <option value="forschung">Grundlagenforschung / hybride KI</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Projektlaufzeit</label>
+          <select id="f-laufzeit">
+            <option value="12">12 Monate</option>
+            <option value="18">18 Monate</option>
+            <option value="24" selected>24 Monate</option>
+            <option value="36">36 Monate</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Vorhabensbeginn</label>
+          <select id="f-vb">
+            <option value="offen">Noch nicht begonnen ✓</option>
+            <option value="konzept">Konzeptphase, kein Vertrag ✓</option>
+            <option value="begonnen">⚠️ Bereits begonnen (nicht förderfähig!)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Projektstart geplant</label>
+          <select id="f-start">
+            <option value="In 1-3 Monaten">In 1–3 Monaten</option>
+            <option value="In 3-6 Monaten">In 3–6 Monaten</option>
+            <option value="In 6-12 Monaten">In 6–12 Monaten</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">EU AI Act</div>
+        <div class="form-group">
+          <label class="form-label">AI Act Risikoklasse</label>
+          <select id="f-aiact">
+            <option value="minimal">Minimal (Spam-Filter, Prozessoptimierung)</option>
+            <option value="begrenzt">Begrenzt (Chatbot, GenAI)</option>
+            <option value="hoch">Hoch (HR, Kreditscoring, Medizin)</option>
+            <option value="unbekannt">Noch nicht bestimmt</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Betroffene Personen</label>
+          <select id="f-personen">
+            <option>Keine Personendaten</option>
+            <option>Mitarbeiter (intern)</option>
+            <option>Kunden / Endnutzer</option>
+            <option>Mitarbeiter + Kunden</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Anwendungsfelder</div>
+        <div class="checkbox-grid" id="felder">
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="Prozessoptimierung">
+            <span class="cb-dot"><span class="cb-check">✓</span></span>
+            Prozessoptimierung
+          </label>
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="Qualitätskontrolle">
+            <span class="cb-dot"><span class="cb-check">✓</span></span>
+            Qualitätskontrolle
+          </label>
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="Predictive Maintenance">
+            <span class="cb-dot"><span class="cb-check">✓</span></span>
+            Predictive Maint.
+          </label>
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="Kundenservice / CX">
+            <span class="cb-dot"><span class="cb-check">✓</span></span>
+            Kundenservice
+          </label>
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="Vertrieb / Marketing">
+            <span class="cb-dot"><span class="cb-check">✓</span></span>
+            Vertrieb
+          </label>
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="Supply Chain">
+            <span class="cb-dot"><span class="cb-check">✓</span></span>
+            Supply Chain
+          </label>
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="HR / Personal">
+            <span class="cb-dot"><span class="cb-check">✓</span></span>
+            HR / Personal
+          </label>
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="Forschung & Entwicklung">
+            <span class="cb-dot"><span class="cb-check">✓</span></span>
+            FuE
+          </label>
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="Energieeffizienz">
+            <span class="cb-dot"><span class="cb-check">✓</span></span>
+            Energieeffizienz
+          </label>
+          <label class="checkbox-item" onclick="toggleCheck(this)">
+            <input type="checkbox" value="Cybersicherheit">
+            <span class="cb-dot"><span class="cb-check">✓</span></span>
+            Cybersicherheit
+          </label>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="runAnalysis(); showPage('analyse')">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-6"/></svg>
+        Analyse starten →
+      </button>
+    </div>
+
+    <!-- ═══ SEITE 3: ANALYSE ═══ -->
+    <div id="page-analyse" class="page">
+      <div class="page-head">
+        <div class="page-title">Förderanalyse</div>
+        <div class="page-sub" id="ana-sub">Bitte zuerst Daten eingeben.</div>
+      </div>
+      <div id="ana-empty" class="empty-state">
+        <div class="empty-icon">📊</div>
+        Bitte Unternehmensdaten und KI-Vorhaben eingeben, dann Analyse starten.
+      </div>
+      <div id="ana-content" style="display:none">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-val" id="r-max">—</div>
+            <div class="kpi-lbl">Max. Potenzial</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" id="r-cnt">—</div>
+            <div class="kpi-lbl">Programme</div>
+          </div>
+        </div>
+        <div id="r-alerts"></div>
+        <div id="r-progs"></div>
+      </div>
+    </div>
+
+    <!-- ═══ SEITE 4: REPORT ═══ -->
+    <div id="page-report" class="page">
+      <div class="page-head">
+        <div class="page-title">KI-Readiness Report</div>
+        <div class="page-sub">Vollständiger Report — als PDF drucken.</div>
+      </div>
+      <div id="report-empty" class="empty-state">
+        <div class="empty-icon">📋</div>
+        Analyse starten um Report zu generieren.
+      </div>
+      <div id="report-content" style="display:none">
+        <button class="btn btn-primary" id="dl-report-btn" onclick="dlReport()">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M2 12h12"/></svg>
+          Report herunterladen (.html → PDF)
+        </button>
+        <div class="report-hero">
+          <div class="report-co" id="rh-name">—</div>
+          <div class="report-meta" id="rh-meta">—</div>
+          <div class="report-metrics">
+            <div class="rm-box"><div class="rm-val" id="rh-aiact">—</div><div class="rm-lbl">AI Act</div></div>
+            <div class="rm-box"><div class="rm-val" id="rh-foerder">—</div><div class="rm-lbl">Potenzial</div></div>
+            <div class="rm-box"><div class="rm-val" id="rh-prog">—</div><div class="rm-lbl">Programme</div></div>
+          </div>
+        </div>
+        <div id="report-body"></div>
+      </div>
+    </div>
+
+    <!-- ═══ SEITE 5: ANTRÄGE ═══ -->
+    <div id="page-antraege" class="page">
+      <div class="page-head">
+        <div class="page-title">Anträge</div>
+        <div class="page-sub">Vorausgefüllte Antragsunterlagen — direkt einreichungsbereit.</div>
+      </div>
+      <div id="ant-empty" class="empty-state">
+        <div class="empty-icon">📝</div>
+        Analyse starten um Antragsunterlagen zu generieren.
+      </div>
+      <div id="ant-content" style="display:none">
+        <div id="ant-warn"></div>
+        <div id="ant-cards"></div>
+      </div>
+    </div>
+
+
+    <!-- ═══ SEITE 6: AI CHECK ═══ -->
+    <div id="page-aicheck" class="page">
+      <div class="page-head">
+        <div class="page-title">AI Act Check</div>
+        <div class="page-sub">Compliance-Analyse Ihres KI-Vorhabens gegen die EU-KI-Verordnung.</div>
+      </div>
+
+      <!-- RESULTS (hidden until analysis run) -->
+      <div id="aic-results" style="display:none">
+        <div class="compliance-hero">
+          <div class="compliance-score-ring">
+            <svg style="position:absolute;inset:0;width:110px;height:110px" viewBox="0 0 110 110">
+              <circle cx="55" cy="55" r="48" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="8"/>
+              <circle id="aic-ring" cx="55" cy="55" r="48" fill="none" stroke="#c8a96e" stroke-width="8"
+                stroke-linecap="round" stroke-dasharray="301.6" stroke-dashoffset="301.6"
+                transform="rotate(-90 55 55)" style="transition:stroke-dashoffset 1s ease"/>
+            </svg>
+            <div class="compliance-score-num" id="aic-score-num">0</div>
+            <div class="compliance-score-lbl">Compliance</div>
+          </div>
+          <div class="compliance-risk-badge" id="aic-risk-badge">—</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:4px" id="aic-risk-sub">—</div>
+        </div>
+
+        <!-- Article Status -->
+        <div class="card">
+          <div class="card-title">Artikel-Status</div>
+          <div id="aic-articles"></div>
+        </div>
+
+        <!-- Action Plan -->
+        <div class="card">
+          <div class="card-title">Handlungsempfehlungen</div>
+          <div id="aic-actions"></div>
+        </div>
+
+        <button class="btn btn-primary" onclick="dlAIReport()">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M2 12h12"/></svg>
+          AI Act Report herunterladen
+        </button>
+        <div style="height:16px"></div>
+      </div>
+
+      <!-- QUESTIONNAIRE -->
+      <div id="aic-form">
+        <!-- Art. 5: Verbotene Praktiken -->
+        <div class="card">
+          <div class="card-title">Art. 5 — Verbotene KI-Praktiken</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">
+            Enthält Ihr KI-System eine der folgenden Funktionen?
+          </div>
+          <div id="prohibited-checks">
+            <label class="checkbox-item" onclick="toggleCheck(this)" style="margin-bottom:8px;display:flex">
+              <input type="checkbox" value="subliminal">
+              <span class="cb-dot"><span class="cb-check">✓</span></span>
+              <span style="font-size:12px">Unterschwellige Beeinflussung von Entscheidungen</span>
+            </label>
+            <label class="checkbox-item" onclick="toggleCheck(this)" style="margin-bottom:8px;display:flex">
+              <input type="checkbox" value="vulnerability">
+              <span class="cb-dot"><span class="cb-check">✓</span></span>
+              <span style="font-size:12px">Ausnutzung von Schwachstellen (Alter, Behinderung)</span>
+            </label>
+            <label class="checkbox-item" onclick="toggleCheck(this)" style="margin-bottom:8px;display:flex">
+              <input type="checkbox" value="social_scoring">
+              <span class="cb-dot"><span class="cb-check">✓</span></span>
+              <span style="font-size:12px">Social Scoring / Bewertung von Personen</span>
+            </label>
+            <label class="checkbox-item" onclick="toggleCheck(this)" style="margin-bottom:8px;display:flex">
+              <input type="checkbox" value="biometric_realtime">
+              <span class="cb-dot"><span class="cb-check">✓</span></span>
+              <span style="font-size:12px">Echtzeit-Biometrie im öffentlichen Raum</span>
+            </label>
+            <label class="checkbox-item" onclick="toggleCheck(this)" style="display:flex">
+              <input type="checkbox" value="emotion_work">
+              <span class="cb-dot"><span class="cb-check">✓</span></span>
+              <span style="font-size:12px">Emotionserkennung am Arbeitsplatz / in Bildung</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Art. 4: Kompetenz -->
+        <div class="card">
+          <div class="card-title">Art. 4 — KI-Kompetenz (seit Aug. 2025 Pflicht)</div>
           <div class="form-group">
-            <label>Lizenz-Tier *</label>
-            <select id="nu-tier" onchange="updatePrice()">
+            <label class="form-label">Mitarbeiterschulungen zu KI durchgeführt?</label>
+            <select id="aic-schulung">
+              <option value="nein">Nein, noch nicht</option>
+              <option value="geplant">Geplant (in den nächsten 3 Monaten)</option>
+              <option value="teilweise">Teilweise (einige Mitarbeiter)</option>
+              <option value="ja">Ja, alle betroffenen Mitarbeiter</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Interne KI-Richtlinie / Policy vorhanden?</label>
+            <select id="aic-policy">
+              <option value="nein">Nein</option>
+              <option value="entwurf">In Erarbeitung</option>
+              <option value="ja">Ja, schriftlich dokumentiert</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Verantwortlicher für KI-Compliance benannt?</label>
+            <select id="aic-verantwortlicher">
+              <option value="nein">Nein</option>
+              <option value="ja">Ja</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Hochrisiko-Klassifizierung -->
+        <div class="card">
+          <div class="card-title">Hochrisiko-KI (Annex III) — Einsatzbereich</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">
+            Wird das KI-System in einem der folgenden Bereiche eingesetzt?
+          </div>
+          <div id="highrisk-checks">
+            <label class="checkbox-item" onclick="toggleCheck(this)" style="margin-bottom:8px;display:flex">
+              <input type="checkbox" value="hr_decisions">
+              <span class="cb-dot"><span class="cb-check">✓</span></span>
+              <span style="font-size:12px">Personalentscheidungen (Einstellung, Bewertung)</span>
+            </label>
+            <label class="checkbox-item" onclick="toggleCheck(this)" style="margin-bottom:8px;display:flex">
+              <input type="checkbox" value="credit_insurance">
+              <span class="cb-dot"><span class="cb-check">✓</span></span>
+              <span style="font-size:12px">Kredit- oder Versicherungsentscheidungen</span>
+            </label>
+            <label class="checkbox-item" onclick="toggleCheck(this)" style="margin-bottom:8px;display:flex">
+              <input type="checkbox" value="education">
+              <span class="cb-dot"><span class="cb-check">✓</span></span>
+              <span style="font-size:12px">Bildung / Bewertung von Lernenden</span>
+            </label>
+            <label class="checkbox-item" onclick="toggleCheck(this)" style="margin-bottom:8px;display:flex">
+              <input type="checkbox" value="critical_infra">
+              <span class="cb-dot"><span class="cb-check">✓</span></span>
+              <span style="font-size:12px">Kritische Infrastruktur (Energie, Wasser, Verkehr)</span>
+            </label>
+            <label class="checkbox-item" onclick="toggleCheck(this)" style="margin-bottom:8px;display:flex">
+              <input type="checkbox" value="medical">
+              <span class="cb-dot"><span class="cb-check">✓</span></span>
+              <span style="font-size:12px">Medizin / Diagnostik / Patientenversorgung</span>
+            </label>
+            <label class="checkbox-item" onclick="toggleCheck(this)" style="display:flex">
+              <input type="checkbox" value="law_enforcement">
+              <span class="cb-dot"><span class="cb-check">✓</span></span>
+              <span style="font-size:12px">Strafverfolgung / Migration / Justiz</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Art. 50: Transparenz -->
+        <div class="card">
+          <div class="card-title">Art. 50 — Transparenzpflichten</div>
+          <div class="form-group">
+            <label class="form-label">Werden Nutzer informiert, dass sie mit KI interagieren?</label>
+            <select id="aic-transparenz">
+              <option value="nein">Nein</option>
+              <option value="teilweise">Teilweise (in AGB / Datenschutzerklärung)</option>
+              <option value="ja">Ja, aktiver Hinweis beim Start</option>
+              <option value="na">Nicht relevant (kein direkter Nutzerkontakt)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Erzeugt das System synthetische Inhalte (Text, Bild, Audio)?</label>
+            <select id="aic-synthetic">
+              <option value="nein">Nein</option>
+              <option value="ja_markiert">Ja, und diese werden als KI-generiert markiert</option>
+              <option value="ja_unmarkiert">Ja, aber keine Kennzeichnung</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Technische Dokumentation -->
+        <div class="card">
+          <div class="card-title">Technische Dokumentation &amp; Governance</div>
+          <div class="form-group">
+            <label class="form-label">Technische Dokumentation des KI-Systems vorhanden?</label>
+            <select id="aic-techdoc">
+              <option value="nein">Nein</option>
+              <option value="begonnen">Begonnen / unvollständig</option>
+              <option value="ja">Ja, vollständig</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Menschliche Aufsicht über KI-Entscheidungen gewährleistet?</label>
+            <select id="aic-oversight">
+              <option value="nein">Nein, vollautomatisch</option>
+              <option value="teilweise">Teilweise (Stichproben)</option>
+              <option value="ja">Ja, Mensch im Loop</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Protokollierung / Logging der KI-Entscheidungen?</label>
+            <select id="aic-logging">
+              <option value="nein">Nein</option>
+              <option value="ja">Ja</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Datenschutz-Folgenabschätzung (DSFA) durchgeführt?</label>
+            <select id="aic-dsfa">
+              <option value="nein">Nein / nicht relevant</option>
+              <option value="geplant">Geplant</option>
+              <option value="ja">Ja, abgeschlossen</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="runAICheck()">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8l3 3 7-7"/><rect x="1" y="1" width="14" height="14" rx="1.5"/></svg>
+          Compliance-Check starten
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ═══ SEITE 7: ADMIN ═══ -->
+    <div id="page-admin" class="page">
+      <div class="page-head">
+        <div class="page-title">Admin</div>
+        <div class="page-sub">Lizenzverwaltung · nur für Sie sichtbar</div>
+      </div>
+
+      <!-- Sub-Navigation -->
+      <div class="admin-section-tabs">
+        <button class="admin-tab active" onclick="showAdminTab('dashboard')">Dashboard</button>
+        <button class="admin-tab" onclick="showAdminTab('users')">Nutzer</button>
+        <button class="admin-tab" onclick="showAdminTab('new')">+ Neu</button>
+      </div>
+
+      <!-- Dashboard -->
+      <div id="admin-sub-dashboard" class="admin-sub-page active">
+        <div class="admin-kpi-grid">
+          <div class="admin-kpi"><div class="admin-kpi-val" id="a-kpi-total">—</div><div class="admin-kpi-lbl">Nutzer</div></div>
+          <div class="admin-kpi"><div class="admin-kpi-val" id="a-kpi-active">—</div><div class="admin-kpi-lbl">Aktiv</div></div>
+          <div class="admin-kpi"><div class="admin-kpi-val" id="a-kpi-expired">—</div><div class="admin-kpi-lbl">Abgelaufen</div></div>
+          <div class="admin-kpi"><div class="admin-kpi-val" id="a-kpi-arr" style="font-size:18px">—</div><div class="admin-kpi-lbl">Jahresumsatz €</div></div>
+        </div>
+        <div id="a-expiry-warn"></div>
+        <div class="card">
+          <div class="card-title">Lizenz-Verteilung</div>
+          <div id="a-tier-dist" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+        </div>
+        <button class="btn btn-secondary" onclick="doLogout()" style="margin-top:8px;font-size:13px">↩ Abmelden</button>
+      </div>
+
+      <!-- Users -->
+      <div id="admin-sub-users" class="admin-sub-page">
+        <div id="a-users-alert"></div>
+        <div class="card">
+          <div class="card-title">Alle Nutzer</div>
+          <div id="a-users-list"><div style="text-align:center;padding:30px;color:var(--text3)">Wird geladen...</div></div>
+        </div>
+      </div>
+
+      <!-- New User -->
+      <div id="admin-sub-new" class="admin-sub-page">
+        <div id="a-new-alert"></div>
+        <div class="card">
+          <div class="card-title">Nutzerdaten</div>
+          <div class="admin-form-row">
+            <div class="form-group"><label class="form-label">Vorname</label><input type="text" id="a-fname" placeholder="Max"></div>
+            <div class="form-group"><label class="form-label">Nachname</label><input type="text" id="a-lname" placeholder="Müller"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:10px"><label class="form-label">E-Mail *</label><input type="email" id="a-email" placeholder="max@firma.de"></div>
+          <div class="form-group" style="margin-bottom:10px"><label class="form-label">Temporäres Passwort *</label><input type="text" id="a-pw" placeholder="Mind. 6 Zeichen"></div>
+          <div class="form-group" style="margin-bottom:10px"><label class="form-label">Unternehmen</label><input type="text" id="a-company" placeholder="Muster GmbH"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Lizenz</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label class="form-label">Tier *</label>
+            <select id="a-tier" onchange="adminUpdatePrice()">
               <option value="demo">Demo (30 Tage, kostenlos)</option>
               <option value="pro">Professional (€2.400/Jahr)</option>
               <option value="enterprise">Enterprise (€9.600/Jahr)</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>Ablaufdatum *</label>
-            <input type="date" id="nu-expiry">
+          <div class="admin-form-row">
+            <div class="form-group"><label class="form-label">Ablaufdatum *</label><input type="date" id="a-expiry"></div>
+            <div class="form-group"><label class="form-label">Wert (€)</label><input type="number" id="a-price" placeholder="2400"></div>
           </div>
-          <div class="form-group">
-            <label>Lizenzwert (€)</label>
-            <input type="number" id="nu-price" placeholder="2400">
-          </div>
+          <div class="form-group"><label class="form-label">Notizen</label><input type="text" id="a-notes" placeholder="Intern"></div>
         </div>
-        <div class="form-group" style="margin-top:6px">
-          <label>Notizen (intern)</label>
-          <input type="text" id="nu-notes" placeholder="z. B. Kontaktperson, Vertragsnummer">
-        </div>
-      </div>
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-primary" onclick="createUser()">Nutzer anlegen &amp; Lizenz aktivieren</button>
-        <button class="btn btn-secondary" onclick="clearNewUserForm()">Zurücksetzen</button>
+        <button class="btn btn-primary" onclick="adminCreateUser()">Nutzer anlegen & Lizenz aktivieren</button>
       </div>
     </div>
 
-    <!-- PRICING -->
-    <div id="admin-page-pricing" class="page">
-      <div class="page-title">Preismodell</div>
-      <div class="page-sub">Übersicht der Lizenz-Tiers und Leistungsmerkmale</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
-        <div class="card" style="border-color:rgba(212,149,74,.3)">
-          <div style="font-size:10px;color:#e8b06a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Demo</div>
-          <div style="font-size:28px;font-weight:700;color:var(--gold);margin-bottom:4px">Kostenlos</div>
-          <div style="font-size:12px;color:var(--text2);margin-bottom:18px">30 Tage Testzugang</div>
-          <div style="font-size:12px;color:var(--text2);line-height:2">✓ Förderanalyse<br>✓ AI Act Check<br>✓ KI-Readiness Report<br>✗ Antragsformulare<br>✗ Admin-Support</div>
-        </div>
-        <div class="card" style="border-color:rgba(93,158,110,.3)">
-          <div style="font-size:10px;color:#7ec88e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Professional</div>
-          <div style="font-size:28px;font-weight:700;color:var(--gold);margin-bottom:4px">€2.400<span style="font-size:14px;font-weight:400;color:var(--text2)">/Jahr</span></div>
-          <div style="font-size:12px;color:var(--text2);margin-bottom:18px">€200/Monat · zzgl. MwSt.</div>
-          <div style="font-size:12px;color:var(--text2);line-height:2">✓ Förderanalyse<br>✓ AI Act Check<br>✓ KI-Readiness Report<br>✓ Alle Antragsformulare<br>✓ Halbjährl. Datenbankupdate</div>
-        </div>
-        <div class="card" style="border-color:rgba(74,127,192,.3)">
-          <div style="font-size:10px;color:#7aaddf;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Enterprise</div>
-          <div style="font-size:28px;font-weight:700;color:var(--gold);margin-bottom:4px">€9.600<span style="font-size:14px;font-weight:400;color:var(--text2)">/Jahr</span></div>
-          <div style="font-size:12px;color:var(--text2);margin-bottom:18px">Eigenes Branding · zzgl. MwSt.</div>
-          <div style="font-size:12px;color:var(--text2);line-height:2">✓ Alle Pro-Features<br>✓ White-Label (eigenes Logo)<br>✓ Unbegrenzte Nutzer<br>✓ Quartärl. Datenbankupdate<br>✓ Priority-Support</div>
-        </div>
-      </div>
-    </div>
+  </div><!-- /content -->
 
-  </main>
-</div>
+  <!-- BOTTOM NAV -->
+  <nav class="bottomnav">
+    <button class="bn-item active" onclick="showPage('firma')">
+      <svg class="bn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="9" width="18" height="12" rx="2"/><path d="M8 9V7a4 4 0 018 0v2"/>
+      </svg>
+      Firma
+    </button>
+    <button class="bn-item" onclick="showPage('ki')">
+      <svg class="bn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/>
+      </svg>
+      KI-Plan
+    </button>
+    <button class="bn-item" onclick="runAnalysis();showPage('analyse')">
+      <svg class="bn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 17l5-5 4 4 7-8"/>
+      </svg>
+      Analyse
+    </button>
+    <button class="bn-item" onclick="runAnalysis();showPage('report')">
+      <svg class="bn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/>
+      </svg>
+      Report
+    </button>
+    <button class="bn-item" onclick="runAnalysis();showPage('antraege')">
+      <svg class="bn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M9 13h6M9 17h4"/>
+      </svg>
+      Anträge
+    </button>
+    <button class="bn-item" onclick="showPage('aicheck')">
+      <svg class="bn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M9 12l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="3"/>
+      </svg>
+      AI Check
+    </button>
+    <button class="bn-item" id="bn-admin" onclick="adminLoadDashboard();adminLoadUsers();showPage('admin')">
+      <svg class="bn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 4a4 4 0 100 8 4 4 0 000-8zM6 20v-1a6 6 0 0112 0v1"/>
+        <circle cx="19" cy="7" r="3" fill="currentColor" stroke="none" opacity=".4"/>
+      </svg>
+      Admin
+    </button>
+  </nav>
+
+</div><!-- /app -->
 
 <script>
-// ── FIREBASE CONFIG — GLEICHE WERTE WIE IN index.html ──
+
+// ════════════════════════════════════════════════════════
+// FIREBASE CONFIG — HIER IHRE WERTE EINTRAGEN
+// ════════════════════════════════════════════════════════
 const firebaseConfig = {
   apiKey:            "AIzaSyBS8cartpLB73uBZ02oL-o20YQlaDjhW4w",
   authDomain:        "ai-navigator-2edae.firebaseapp.com",
@@ -264,175 +1393,844 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
-// ── ADMIN EMAIL (nur dieser Nutzer sieht das Admin-Panel) ──
-const ADMIN_EMAIL = "nicolai.derr@gmail.com";
-
-// ── AUTH ──
-auth.onAuthStateChanged(user => {
-  if (user && user.email === ADMIN_EMAIL) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('admin-app').style.display = 'grid';
-    document.getElementById('adm-user-name').textContent = user.email.split('@')[0];
-    loadDashboard();
-    loadUsers();
-  } else if (user) {
-    auth.signOut();
-    document.getElementById('login-err').textContent = 'Kein Admin-Zugang.';
+// ════════════════════════════════════════════════════════
+// AUTH STATE
+// ════════════════════════════════════════════════════════
+auth.onAuthStateChanged(async user => {
+  if (user) {
+    await checkLicense(user);
   } else {
-    document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('admin-app').style.display = 'none';
+    showAuthScreen();
   }
 });
 
-async function adminLogin() {
-  const email = document.getElementById('adm-email').value.trim();
-  const pw    = document.getElementById('adm-pw').value;
-  document.getElementById('login-err').textContent = '';
+async function checkLicense(user) {
   try {
-    await auth.signInWithEmailAndPassword(email, pw);
+    const doc = await db.collection('licenses').doc(user.uid).get();
+    if (!doc.exists) {
+      // Kein Lizenz-Dokument → Zugang verweigern
+      showLicenseExpired();
+      return;
+    }
+    const lic = doc.data();
+    const now = new Date();
+    const exp = lic.expiresAt ? lic.expiresAt.toDate() : null;
+    if (!lic.active || (exp && exp < now)) {
+      showLicenseExpired();
+      return;
+    }
+    // Lizenz gültig → App anzeigen
+    window._license = lic;
+    showApp(user, lic);
   } catch(e) {
-    document.getElementById('login-err').textContent = 'Anmeldung fehlgeschlagen: ' + (e.message || e.code);
+    showAuthScreen('Verbindungsfehler. Bitte erneut versuchen.');
   }
 }
 
-async function adminLogout() {
+function showApp(user, lic) {
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.getElementById('license-expired').style.display = 'none';
+  document.getElementById('app-shell').style.display = '';
+  // Show admin tab if admin
+  if (user.email === 'nicolai.derr@gmail.com') {
+    document.getElementById('bn-admin').style.display = 'flex';
+  }
+  // Show license badge in topbar
+  const tierLabel = { demo: 'Demo', pro: 'Pro', enterprise: 'Enterprise' }[lic.tier] || lic.tier;
+  const tierClass = { demo: 'badge-demo', pro: 'badge-pro', enterprise: 'badge-enterprise' }[lic.tier] || 'badge-demo';
+  const badge = `<span class="license-badge ${tierClass}">${tierLabel}</span>`;
+  document.getElementById('tb-sub').innerHTML = (lic.name || user.email.split('@')[0]) + ' ' + badge;
+}
+
+function showAuthScreen(err) {
+  document.getElementById('auth-overlay').style.display = 'flex';
+  document.getElementById('app-shell').style.display = 'none';
+  if (err) document.getElementById('auth-error').textContent = err;
+  setAuthLoading(false);
+}
+
+function showLicenseExpired() {
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.getElementById('license-expired').style.display = 'block';
+  document.getElementById('app-shell').style.display = 'none';
+}
+
+function setAuthLoading(loading) {
+  document.getElementById('auth-btn').disabled = loading;
+  document.getElementById('auth-btn').style.display = loading ? 'none' : 'block';
+  document.getElementById('auth-spinner').style.display = loading ? 'block' : 'none';
+}
+
+async function doLogin() {
+  const email = document.getElementById('auth-email').value.trim();
+  const pw    = document.getElementById('auth-pw').value;
+  const errEl = document.getElementById('auth-error');
+  errEl.textContent = '';
+  if (!email || !pw) { errEl.textContent = 'Bitte E-Mail und Passwort eingeben.'; return; }
+  setAuthLoading(true);
+  try {
+    await auth.signInWithEmailAndPassword(email, pw);
+    // onAuthStateChanged übernimmt den Rest
+  } catch(e) {
+    const msgs = {
+      'auth/user-not-found': 'E-Mail Adresse nicht gefunden.',
+      'auth/wrong-password': 'Falsches Passwort.',
+      'auth/invalid-email': 'Ungültige E-Mail Adresse.',
+      'auth/too-many-requests': 'Zu viele Versuche. Bitte warten.',
+      'auth/invalid-credential': 'E-Mail oder Passwort falsch.'
+    };
+    errEl.textContent = msgs[e.code] || 'Anmeldung fehlgeschlagen.';
+    setAuthLoading(false);
+  }
+}
+
+async function doLogout() {
   await auth.signOut();
 }
 
+// Enter key submits login
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') adminLogin();
+  if (e.key === 'Enter' && document.getElementById('auth-overlay').style.display !== 'none') {
+    doLogin();
+  }
 });
 
-// ── NAVIGATION ──
-function showAdminPage(id) {
+// ════════════════════════════════════════════════════════
+// SERVICE WORKER
+// ════════════════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// ════════════════════════════════════════════════════════
+// INSTALL BANNER (iOS)
+// ════════════════════════════════════════════════════════
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = window.navigator.standalone;
+if (isIOS && !isStandalone) {
+  document.getElementById('install-hint').style.display = 'flex';
+}
+
+// ════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════
+function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('admin-page-' + id).classList.add('active');
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const idx = { firma: 0, ki: 1, analyse: 2, report: 3, antraege: 4, aicheck: 5, admin: 6 }[id];
+  if (idx !== undefined) document.querySelectorAll('.bn-item')[idx].classList.add('active');
+  document.getElementById('main-content').scrollTop = 0;
+}
+
+function toggleCheck(el) { el.classList.toggle('checked'); }
+
+// ════════════════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════════════════
+const PROG = [
+  { id: 'bafa', name: 'BAFA Unternehmensberatung', traeger: 'Bundesamt f. Wirtschaft', typ: 'bund', max: 2800, quote: '50–80 %', deadline: '31.12.2026', anfMin: 'anwendung', anfMaxMA: 249, anfMaxUM: 50, prio: 9, match: ['kmu'], steps: ['BAFA-registrierten Berater beauftragen', 'Vor Beratungsbeginn Antrag beim BAFA stellen', 'Beratung durchführen', 'Verwendungsnachweis einreichen'] },
+  { id: 'forschungszulage', name: 'Forschungszulage (FZulG)', traeger: 'Bescheinigungsstelle BSFZ', typ: 'steuer', max: 4200000, quote: '35 % FuE-Personal (KMU)', deadline: 'Rückwirkend bis 4 Jahre', prio: 10, match: ['immer'], steps: ['Steuerberater informieren', 'Bescheinigungsantrag bei BSFZ stellen', 'Bescheinigung dem Finanzamt vorlegen', 'Zulage mit Steuerbescheid gutgeschrieben'] },
+  { id: 'zim', name: 'ZIM – Zentrales Innovationsprogramm', traeger: 'BMWE / AiF', typ: 'bund', max: 310500, quote: '35–45 %', deadline: 'Fortlaufend (8–12 Wochen)', anfMin: 'anpassung', anfMaxMA: 500, anfMaxUM: 100, prio: 10, match: ['kmu'], steps: ['Projektskizze erstellen', 'Antrag auf zim.de einreichen (VOR Vertragsabschluss!)', 'Bearbeitung 8–12 Wochen', 'Bewilligungsbescheid abwarten'] },
+  { id: 'kmuinno', name: 'KMU-innovativ IKT & KI (BMBF)', traeger: 'Bundesministerium Bildung', typ: 'bund', max: 500000, quote: '50 % + KMU-Bonus', deadline: '15.10.2026', anfMin: 'anpassung', anfMaxMA: 500, anfMaxUM: 100, prio: 7, match: ['kmu'], steps: ['Projektskizze erstellen (max. 10 Seiten)', 'Einreichen bis 15.10.2026 auf easy-online.de', 'Bei Aufforderung Vollantrag stellen'] },
+  { id: 'kfw', name: 'KfW Digitalisierungskredit (267)', traeger: 'KfW Bankengruppe', typ: 'bund', max: 25000000, quote: 'Zinsgünstiger Kredit', deadline: 'Fortlaufend', anfMin: 'anwendung', prio: 7, match: ['immer'], steps: ['Hausbank kontaktieren', 'Finanzierungsplan vorlegen', 'KfW-Antrag über Hausbank stellen'] },
+  { id: 'eic', name: 'EIC Accelerator (Horizon Europe)', traeger: 'Europäischer Innovationsrat', typ: 'eu', max: 2500000, quote: 'bis 70 % + Eigenkapital', deadline: 'Mehrere Cuts p.a.', anfMin: 'neuentwicklung', anfMaxMA: 499, prio: 5, match: ['kmu'], steps: ['Short Application online ausfüllen', 'Bei Aufforderung Full Application einreichen', 'Pitching vor EIC-Jury'] },
+  { id: 'he', name: 'DIGI-Zuschuss Hessen', traeger: 'Hessisches Ministerium', typ: 'land', max: 10000, quote: 'bis 50 %', deadline: 'Fortlaufend', anfMin: 'anwendung', anfMaxMA: 499, anfBL: 'HE', prio: 8, match: ['kmu', 'he'], steps: ['Online-Antrag stellen', 'Förderbescheid abwarten', 'KI-Reallabor Hessen nutzen'] },
+  { id: 'by', name: 'Digitalbonus Bayern Plus', traeger: 'Bayerisches Staatsministerium', typ: 'land', max: 30000, quote: 'bis 50 %', deadline: 'Fortlaufend', anfMin: 'anwendung', anfMaxMA: 499, anfBL: 'BY', prio: 8, match: ['kmu', 'by'], steps: ['Antrag unter digitalbonus.bayern', 'ELSTER-Konto erforderlich', 'Projekt erst nach Bewilligung starten'] },
+  { id: 'nw', name: 'MID NRW', traeger: 'NRW.Bank', typ: 'land', max: 48000, quote: 'bis 50 %', deadline: 'Fortlaufend', anfMin: 'anwendung', anfMaxMA: 499, anfBL: 'NW', prio: 8, match: ['kmu', 'nw'], steps: ['Gutscheinantrag bei NRW.Bank', 'Digitalberater beauftragen', 'Verwendungsnachweis einreichen'] },
+  { id: 'bw', name: 'Invest BW', traeger: 'L-Bank Baden-Württemberg', typ: 'land', max: 1300000, quote: 'bis 50 %', deadline: 'Laufend, zweistufig', anfMin: 'anpassung', anfMaxMA: 499, anfBL: 'BW', prio: 7, match: ['kmu', 'bw'], steps: ['Interessenbekundung bei L-Bank', 'Vollantrag nach Aufforderung', 'Bewilligung abwarten, dann starten'] },
+];
+
+let U = {}, matched = [], ran = false;
+
+function gv(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+
+function collect() {
+  U = {
+    name: gv('f-name') || 'Ihr Unternehmen',
+    ansprech: gv('f-ansprech') || '—',
+    position: gv('f-position') || '—',
+    plzort: gv('f-plzort') || '—',
+    email: gv('f-email') || '—',
+    tel: gv('f-tel') || '—',
+    bl: gv('f-bl'),
+    branche: gv('f-branche'),
+    rf: gv('f-rf') || '—',
+    ma: parseInt(gv('f-ma')) || 0,
+    um: parseFloat(gv('f-um')) || 0,
+    gj: parseInt(gv('f-gj')) || 2010,
+    steuer: gv('f-steuer') || '—',
+    iban: gv('f-iban') || '—',
+    budget: parseInt(gv('f-budget')) || 0,
+    personal: parseInt(gv('f-personal')) || 0,
+    fue: gv('f-fue'),
+    ptitel: gv('f-ptitel') || 'KI-Vorhaben',
+    pkurz: gv('f-pkurz') || '[Bitte beschreiben]',
+    prob: gv('f-prob') || '[Bitte beschreiben]',
+    loesung: gv('f-loesung') || '[Bitte beschreiben]',
+    nutzen: gv('f-nutzen') || '[Bitte beschreiben]',
+    kiTyp: gv('f-kiTyp'),
+    inno: gv('f-inno'),
+    laufzeit: gv('f-laufzeit') || '24',
+    vb: gv('f-vb'),
+    start: gv('f-start'),
+    aiact: gv('f-aiact'),
+    personen: gv('f-personen'),
+    felder: [...document.querySelectorAll('#felder .checked input')].map(i => i.value),
+  };
+  U.isKMU = U.ma <= 249 && U.um <= 50;
+  U.hasFuE = U.fue !== 'Nein';
+  U.il = { anwendung: 1, anpassung: 2, neuentwicklung: 3, forschung: 4 }[U.inno] || 1;
+}
+
+function scoreProg(p) {
+  let s = 0;
+  if (p.anfBL && p.anfBL !== U.bl) return 0;
+  if (p.anfMaxMA && U.ma > p.anfMaxMA) return 0;
+  if (p.anfMaxUM && U.um > p.anfMaxUM) return 0;
+  const mi = { anwendung: 1, anpassung: 2, neuentwicklung: 3, forschung: 4 };
+  if (p.anfMin && U.il < mi[p.anfMin]) return 0;
+  s += p.prio * 5;
+  if (p.match.includes('immer')) s += 30;
+  if (p.match.includes('kmu') && U.isKMU) s += 25;
+  ['by', 'nw', 'bw', 'he'].forEach(bl => { if (p.match.includes(bl) && U.bl === bl.toUpperCase()) s += 30; });
+  return Math.max(0, Math.min(100, s));
+}
+
+function calcScore() {
+  let s = 50;
+  if (U.isKMU) s += 10;
+  if (U.hasFuE) s += 10;
+  if (U.il >= 3) s += 15;
+  else if (U.il >= 2) s += 5;
+  if (U.budget >= 50000) s += 5;
+  return Math.min(100, s);
+}
+
+function fmtE(v) {
+  if (!v || v === 0) return 'kostenlos';
+  if (v >= 1000000) return (v / 1000000).toFixed(1).replace('.', ',') + ' Mio. €';
+  if (v >= 1000) return Math.round(v / 1000) + 'k €';
+  return v + ' €';
+}
+
+function today() { return new Date().toLocaleDateString('de-DE'); }
+
+const TB = t => ({ eu: '<span class="badge badge-eu">EU</span>', bund: '<span class="badge badge-bund">Bund</span>', land: '<span class="badge badge-land">Land</span>', steuer: '<span class="badge badge-steuer">Steuerlich</span>' }[t] || '');
+
+function runAnalysis() {
+  collect();
+  ran = true;
+  const scored = PROG.map(p => ({ ...p, score: scoreProg(p) })).filter(p => p.score > 0).sort((a, b) => b.score - a.score);
+  matched = scored;
+  const fs = calcScore();
+  const top = scored.slice(0, 7);
+  const maxF = top.reduce((s, p) => s + (p.max || 0), 0);
+
+  // Update score pill
+  document.getElementById('score-pill').style.display = 'flex';
+  document.getElementById('score-num').textContent = fs;
+  document.getElementById('tb-sub').textContent = U.name.length > 18 ? U.name.slice(0, 16) + '…' : U.name;
+
+  // Analyse page
+  document.getElementById('ana-sub').textContent = scored.length + ' Programme für ' + U.name;
+  document.getElementById('ana-empty').style.display = 'none';
+  document.getElementById('ana-content').style.display = 'block';
+  document.getElementById('r-max').textContent = fmtE(maxF);
+  document.getElementById('r-cnt').textContent = scored.length;
+
+  const al = document.getElementById('r-alerts');
+  al.innerHTML = '';
+  if (U.vb === 'begonnen') al.innerHTML += '<div class="alert alert-red">⚠️ KRITISCH: Vorhaben begonnen — Förderfähigkeit gefährdet!</div>';
+  if (U.start === 'In 1-3 Monaten') al.innerHTML += '<div class="alert alert-warn">Start in 1–3 Monaten: ZIM-Antrag SOFORT einreichen!</div>';
+  if (U.aiact === 'hoch') al.innerHTML += '<div class="alert alert-warn">Hochrisiko-KI: Konformitätspflicht ab Aug. 2026.</div>';
+
+  document.getElementById('r-progs').innerHTML = top.map(p => `
+    <div class="prog-card">
+      <div class="prog-header">
+        <div>
+          <div class="prog-title">${p.name}</div>
+          <div class="prog-traeger">${p.traeger}</div>
+        </div>
+        <div class="prog-amount">${fmtE(p.max)}</div>
+      </div>
+      <div class="prog-bar"><div class="prog-bar-fill" style="width:${Math.min(100, p.score)}%"></div></div>
+      <div class="prog-meta">${TB(p.typ)}<span class="badge ${p.score >= 70 ? 'badge-hoch' : 'badge-mittel'}">${p.score >= 70 ? 'Hohe Priorität' : 'Mittlere Priorität'}</span></div>
+      <div class="prog-action"><strong style="color:var(--gold);font-size:10px;letter-spacing:.06em;text-transform:uppercase">Nächster Schritt</strong><br>${p.steps[0]}</div>
+    </div>`).join('');
+
+  renderReport();
+  renderAntraege();
+}
+
+// ═══ REPORT ═══
+function renderReport() {
+  document.getElementById('report-empty').style.display = 'none';
+  document.getElementById('report-content').style.display = 'block';
+  const top = matched.slice(0, 5);
+  const maxF = top.reduce((s, p) => s + (p.max || 0), 0);
+  const aiLabels = { minimal: 'Minimal', begrenzt: 'Begrenzt', hoch: 'Hochrisiko', unbekannt: 'Ungeklärt' };
+  document.getElementById('rh-name').textContent = U.name;
+  document.getElementById('rh-meta').textContent = U.ansprech + (U.position !== '—' ? ' · ' + U.position : '') + ' · ' + today();
+  document.getElementById('rh-aiact').textContent = aiLabels[U.aiact] || '—';
+  document.getElementById('rh-foerder').textContent = fmtE(maxF);
+  document.getElementById('rh-prog').textContent = matched.length;
+
+  const row = (k, v) => `<div class="rs-row"><span class="rs-key">${k}</span><span class="rs-val">${v || '—'}</span></div>`;
+  document.getElementById('report-body').innerHTML = `
+    <div class="card">
+      <div class="rs-section">
+        <div class="rs-section-title"><span class="rs-num">1</span>Unternehmen</div>
+        ${row('Firma', U.name)} ${row('Ort', U.plzort)} ${row('Mitarbeiter / Umsatz', U.ma + ' MA · ' + U.um + ' Mio. €')} ${row('KMU-Status', U.isKMU ? '✓ Bestätigt' : 'Kein KMU')}
+      </div>
+      <div class="rs-section">
+        <div class="rs-section-title"><span class="rs-num">2</span>KI-Vorhaben</div>
+        ${row('Projekttitel', U.ptitel)} ${row('KI-Technologie', U.kiTyp)} ${row('Budget / Laufzeit', fmtE(U.budget) + ' · ' + U.laufzeit + ' Monate')}
+      </div>
+      <div class="rs-section">
+        <div class="rs-section-title"><span class="rs-num">3</span>AI Act Status</div>
+        ${row('Risikoklasse', aiLabels[U.aiact] || '—')} ${row('Betroffene Personen', U.personen)} ${row('Technologie', U.kiTyp)}
+      </div>
+      <div class="rs-section">
+        <div class="rs-section-title"><span class="rs-num">4</span>Top-Förderprogramme</div>
+        ${top.map(p => `<div class="rs-row"><span class="rs-key">${p.name}</span><span class="rs-val" style="color:var(--gold)">${fmtE(p.max)}</span></div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ═══ ANTRÄGE ═══
+function renderAntraege() {
+  document.getElementById('ant-empty').style.display = 'none';
+  document.getElementById('ant-content').style.display = 'block';
+  let warn = '';
+  if (U.vb === 'begonnen') warn += '<div class="alert alert-red">KRITISCH: Vorhaben begonnen — Anträge können abgelehnt werden!</div>';
+  if (U.start === 'In 1-3 Monaten') warn += '<div class="alert alert-warn">Start in 1–3 Monaten: ZIM-Antrag noch HEUTE einreichen!</div>';
+  warn += '<div class="alert alert-info">Anträge auf Basis Ihrer Eingaben vorausgefüllt. [PRÜFEN]-Felder bitte manuell ergänzen.</div>';
+  document.getElementById('ant-warn').innerHTML = warn;
+
+  const top = matched.filter(p => p.id !== 'forschungszulage').slice(0, 5);
+  const fzul = PROG.find(p => p.id === 'forschungszulage');
+  const all = fzul ? [fzul, ...top] : top;
+
+  document.getElementById('ant-cards').innerHTML = all.map((p, i) => `
+    <div class="antrag-card">
+      <div class="ac-header">
+        <div>
+          <div class="ac-title">${i + 1}. ${p.name}</div>
+          <div class="ac-traeger">${p.traeger}</div>
+        </div>
+        <div class="ac-amount">${fmtE(p.max)}</div>
+      </div>
+      <div class="ac-meta">
+        <div class="ac-meta-item"><label>Förderquote</label><span class="acc">${p.quote}</span></div>
+        <div class="ac-meta-item"><label>Deadline</label><span>${p.deadline}</span></div>
+      </div>
+      <div class="ac-steps">${p.steps.map((s, n) => `
+        <div class="ac-step">
+          <span class="ac-step-num">${n + 1}</span>
+          <span>${s}</span>
+        </div>`).join('')}
+      </div>
+      <button class="btn btn-green" onclick="dlAntrag('${p.id}')">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M2 12h12"/></svg>
+        Antrag herunterladen
+      </button>
+    </div>`).join('');
+}
+
+// ═══ DOWNLOAD FUNCTIONS ═══
+function dlHTML(html, filename) {
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function dlReport() {
+  if (!ran) runAnalysis();
+  dlHTML(buildReport(), 'KI-Report_' + U.name.replace(/[^a-zA-Z0-9]/g, '_') + '.html');
+}
+
+function dlAntrag(pid) {
+  if (!ran) runAnalysis();
+  const p = PROG.find(x => x.id === pid);
+  if (!p) return;
+  const html = genAntrag(p);
+  dlHTML(html, 'Antrag_' + pid.toUpperCase() + '_' + U.name.replace(/[^a-zA-Z0-9]/g, '_') + '.html');
+}
+
+// ═══ REPORT HTML ═══
+function buildReport() {
+  const top = matched.slice(0, 6);
+  const maxF = top.reduce((s, p) => s + (p.max || 0), 0);
+  const aiL = { minimal: 'Minimal', begrenzt: 'Begrenzt', hoch: 'Hochrisiko', unbekannt: 'Ungeklärt' }[U.aiact] || '—';
+  const aiC = { minimal: '#2D7A4F', begrenzt: '#185FA5', hoch: '#A63232', unbekannt: '#B87A1A' }[U.aiact] || '#666';
+  const aiB = { minimal: '#DFF0E8', begrenzt: '#D6E8F7', hoch: '#FAEAEA', unbekannt: '#FDF3DC' }[U.aiact] || '#eee';
+  return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KI-Readiness Report ${U.name}</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;color:#222;font-size:14px;line-height:1.6}
+.wrap{max-width:800px;margin:0 auto;padding:32px 24px}
+.cover{background:linear-gradient(135deg,#1B3A5C,#2E6DA4);color:#fff;padding:36px 24px;border-radius:10px;margin-bottom:24px}
+.co-tag{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(200,169,110,.8);margin-bottom:8px}
+.co-name{font-size:26px;font-weight:700;margin-bottom:3px}
+.co-meta{font-size:12px;color:rgba(255,255,255,.65);margin-bottom:20px}
+.metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.metric{background:rgba(255,255,255,.12);border-radius:8px;padding:12px;text-align:center}
+.metric label{font-size:9px;color:rgba(255,255,255,.6);display:block;margin-bottom:4px}
+.metric .val{font-size:18px;font-weight:700}
+h2{font-size:16px;font-weight:700;color:#1B3A5C;border-bottom:2px solid #C8A96E;padding-bottom:6px;margin:22px 0 12px}
+table{width:100%;border-collapse:collapse;margin-bottom:16px}
+td{padding:8px 12px;border-bottom:1px solid #eee;font-size:13px}
+td:first-child{color:#888;width:160px;vertical-align:top}
+td:last-child{font-weight:500}
+.prog{display:flex;justify-content:space-between;padding:10px 12px;background:#f8f8f5;border-radius:7px;margin-bottom:6px;font-size:13px}
+.prog span:last-child{font-weight:700;color:#2D7A4F}
+.info{background:#D6E8F7;border-left:4px solid #2E6DA4;padding:12px 14px;border-radius:0 6px 6px 0;font-size:13px;color:#0C447C;margin:14px 0}
+.print-btn{position:fixed;top:14px;right:14px;background:#1B3A5C;color:#fff;padding:10px 18px;border:none;border-radius:8px;font-size:13px;cursor:pointer}
+footer{background:#1B3A5C;color:rgba(255,255,255,.5);padding:12px 24px;font-size:11px;display:flex;justify-content:space-between;margin-top:24px}
+@media print{.print-btn{display:none}}
+</style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+</head><body>
+<button class="print-btn" onclick="window.print()">Als PDF drucken</button>
+<div class="wrap">
+<div class="cover">
+  <div class="co-tag">KI-Readiness Report · ${today()} · Vertraulich</div>
+  <div class="co-name">${U.name}</div>
+  <div class="co-meta">${U.ansprech} · ${U.position} · ${U.plzort}</div>
+  <div class="metrics">
+    <div class="metric"><label>AI Act Risikoklasse</label><div class="val"><span style="background:${aiB};color:${aiC};padding:2px 10px;border-radius:20px;font-size:12px">${aiL}</span></div></div>
+    <div class="metric"><label>Max. Förderpotenzial</label><div class="val" style="color:#C8A96E">${fmtE(maxF)}</div></div>
+    <div class="metric"><label>Programme</label><div class="val">${matched.length}</div></div>
+  </div>
+</div>
+<h2>1. Unternehmensprofil</h2>
+<table><tr><td>Firma</td><td>${U.name} · ${U.plzort}</td></tr><tr><td>Branche</td><td>${U.branche}</td></tr><tr><td>MA / Umsatz</td><td>${U.ma} MA · ${U.um} Mio. €</td></tr><tr><td>KMU-Status</td><td>${U.isKMU ? '✓ Bestätigt' : 'Kein KMU'}</td></tr></table>
+<h2>2. KI-Vorhaben</h2>
+<table><tr><td>Projekttitel</td><td>${U.ptitel}</td></tr><tr><td>Technologie</td><td>${U.kiTyp}</td></tr><tr><td>Budget</td><td>${fmtE(U.budget)} · ${U.laufzeit} Monate</td></tr><tr><td>Felder</td><td>${U.felder.join(', ') || '—'}</td></tr></table>
+<h2>3. EU AI Act Status</h2>
+<table><tr><td>Risikoklasse</td><td><span style="background:${aiB};color:${aiC};padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600">${aiL}</span></td></tr><tr><td>Betroffene</td><td>${U.personen}</td></tr></table>
+<h2>4. Empfohlene Förderprogramme</h2>
+${top.map((p, i) => `<div class="prog"><span>${i + 1}. ${p.name}</span><span>${fmtE(p.max)}</span></div>`).join('')}
+<div class="info">Kombination: BAFA → ZIM → Forschungszulage parallel → ${U.bl || 'Landesprogramm'}</div>
+<h2>5. Aktionsplan</h2>
+<table><tr><td>Sofort</td><td>BAFA-Berater beauftragen, Antrag stellen</td></tr><tr><td>Woche 1–2</td><td>ZIM-Antrag einreichen (VOR Vertragsabschluss!)</td></tr><tr><td>Woche 1</td><td>Steuerberater: Forschungszulage prüfen</td></tr><tr><td>Monat 1–2</td><td>AI Act Dokumentation aufsetzen</td></tr></table>
+</div>
+<footer><span>KI-Readiness Report · ${U.name}</span><span>KI-Förder-Navigator 2026</span></footer>
+</body></html>`;
+}
+
+// ═══ ANTRAG HTML ═══
+function genAntrag(p) {
+  const cover = `<div style="background:linear-gradient(135deg,#1B3A5C,#2E6DA4);color:#fff;padding:32px 24px;border-radius:10px;margin-bottom:24px">
+    <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(200,169,110,.8);margin-bottom:8px">${p.traeger}</div>
+    <div style="font-size:24px;font-weight:700;line-height:1.3;margin-bottom:4px">${p.name}<br>Förderantrag</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.7)">${U.name} · ${today()}</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px">
+      ${[p.quote, fmtE(p.max), p.deadline].map(x => `<span style="background:rgba(255,255,255,.12);padding:4px 12px;border-radius:20px;font-size:12px">${x}</span>`).join('')}
+    </div>
+  </div>`;
+
+  const sec = t => `<h2 style="font-size:15px;font-weight:700;color:#1B3A5C;border-bottom:2px solid #C8A96E;padding-bottom:6px;margin:22px 0 12px">${t}</h2>`;
+  const tbl = rows => `<table style="width:100%;border-collapse:collapse;margin-bottom:16px">${rows.map(r => `<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;color:#888;width:180px;vertical-align:top">${r[0]}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;font-weight:500">${r[1]}</td></tr>`).join('')}</table>`;
+  const field = (l, v) => `<div style="margin-bottom:14px"><div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">${l}</div><div style="background:#f8f8f5;border-left:4px solid #2E6DA4;padding:12px 14px;border-radius:0 6px 6px 0;font-size:13px;color:#333;line-height:1.7">${v}</div></div>`;
+  const sig = `<div style="margin-top:32px;padding-top:18px;border-top:2px solid #eee;display:grid;grid-template-columns:1fr 1fr;gap:20px"><div><div style="border-bottom:1px solid #222;padding-bottom:4px;min-height:48px;font-size:12px;color:#888">${U.name}<br><small>Ort, Datum: ${today()}</small></div><div style="font-size:11px;color:#aaa;margin-top:4px">Firmenstempel und Unterschrift</div></div><div><div style="border-bottom:1px solid #222;padding-bottom:4px;min-height:48px;font-size:12px;color:#888">${U.ansprech} (${U.position})</div><div style="font-size:11px;color:#aaa;margin-top:4px">Handlungsbevollmächtigt</div></div></div>`;
+
+  const body = `
+    ${sec('1. Antragstellendes Unternehmen')}
+    ${tbl([['Unternehmensname', U.name], ['Rechtsform', U.rf], ['PLZ / Ort', U.plzort], ['Bundesland', U.bl], ['Mitarbeiter', U.ma], ['Jahresumsatz', U.um + ' Mio. €'], ['Ansprechpartner', U.ansprech + ' (' + U.position + ')'], ['E-Mail / Telefon', U.email + ' · ' + U.tel], ['Steuernummer', U.steuer], ['IBAN', U.iban], ['KMU-Status', U.isKMU ? '✓ Bestätigt' : 'Prüfen']])}
+    ${sec('2. Vorhaben')}
+    ${field('Projekttitel', U.ptitel)}
+    ${field('KI-Technologie / Art des Vorhabens', U.kiTyp + ' · Felder: ' + (U.felder.join(', ') || '—'))}
+    ${field('Kurzbeschreibung', U.pkurz)}
+    ${field('Ausgangssituation', U.prob)}
+    ${field('Technischer Ansatz', U.loesung)}
+    ${field('Erwarteter Nutzen', U.nutzen)}
+    ${sec('3. Finanzierung')}
+    ${tbl([['Gesamtbudget', fmtE(U.budget)], ['Personalkosten', fmtE(U.personal)], ['Projektlaufzeit', U.laufzeit + ' Monate'], ['Beantragte Förderung', fmtE(Math.min(p.max || 0, Math.round(U.budget * 0.45)))]])}
+    ${sec('4. Erklärungen')}
+    ${field('Vorhabensbeginn', U.vb === 'begonnen' ? '⚠️ PRÜFEN — Vorhaben evtl. bereits begonnen' : '✓ Vorhaben noch nicht begonnen')}
+    ${field('KMU-Erklärung', U.isKMU ? '✓ Unternehmen erfüllt KMU-Kriterien (< 250 MA, < 50 Mio. € Umsatz)' : '[PRÜFEN — KMU-Status verifizieren]')}
+    ${sig}`;
+
+  return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${p.name} — Antrag</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;color:#222;font-size:14px;line-height:1.6}.wrap{max-width:800px;margin:0 auto;padding:32px 24px}.print-btn{position:fixed;top:14px;right:14px;background:#1B3A5C;color:#fff;padding:10px 18px;border:none;border-radius:8px;font-size:13px;cursor:pointer}@media print{.print-btn{display:none}}</style>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+</head><body>
+<button class="print-btn" onclick="window.print()">Drucken / PDF</button>
+<div class="wrap">${cover}${body}</div>
+</body></html>`;
+}
+
+// ════════════════════════════════════════════════════════
+// AI ACT COMPLIANCE CHECK
+// ════════════════════════════════════════════════════════
+
+function runAICheck() {
+  collect(); // get firm + project data
+
+  // Read prohibited practices
+  const prohibited = [...document.querySelectorAll('#prohibited-checks .checked input')].map(i => i.value);
+  const highRisk   = [...document.querySelectorAll('#highrisk-checks .checked input')].map(i => i.value);
+
+  const schulung       = document.getElementById('aic-schulung').value;
+  const policy         = document.getElementById('aic-policy').value;
+  const verantwortlich = document.getElementById('aic-verantwortlicher').value;
+  const transparenz    = document.getElementById('aic-transparenz').value;
+  const synthetic      = document.getElementById('aic-synthetic').value;
+  const techdoc        = document.getElementById('aic-techdoc').value;
+  const oversight      = document.getElementById('aic-oversight').value;
+  const logging        = document.getElementById('aic-logging').value;
+  const dsfa           = document.getElementById('aic-dsfa').value;
+
+  const hasProhibited = prohibited.length > 0;
+  const isHighRisk    = highRisk.length > 0 || U.aiact === 'hoch';
+  const isGenAI       = U.kiTyp && U.kiTyp.includes('Generative');
+
+  // ─── Scoring ───────────────────────────────────────────────────────────────
+  let score = 100;
+  const articles = [];
+  const actions  = [];
+
+  // Art. 5 — Verbotene Praktiken
+  if (hasProhibited) {
+    score -= 40;
+    articles.push({ art: 'Art. 5', title: 'Verbotene KI-Praktiken', status: 'crit',
+      sub: 'Das System enthält potenziell verbotene Funktionen — sofortiger Handlungsbedarf.' });
+    actions.push({ prio: 'sofort', title: 'Verbotene Funktionen prüfen und entfernen',
+      desc: 'Beauftragen Sie sofort eine rechtliche Überprüfung. Verbotene Praktiken gem. Art. 5 sind seit Feb. 2025 strafbewehrt (bis 35 Mio. € oder 7% Umsatz).',
+      art: 'Art. 5 EU AI Act — In Kraft seit 2. Feb. 2025' });
+  } else {
+    articles.push({ art: 'Art. 5', title: 'Verbotene KI-Praktiken', status: 'ok',
+      sub: 'Keine verbotenen Praktiken identifiziert.' });
+  }
+
+  // Art. 4 — Kompetenz
+  const art4Score = { nein: 0, geplant: 1, teilweise: 2, ja: 3 }[schulung] +
+                    { nein: 0, entwurf: 1, ja: 2 }[policy] +
+                    { nein: 0, ja: 1 }[verantwortlich];
+  if (art4Score <= 1) {
+    score -= 15;
+    articles.push({ art: 'Art. 4', title: 'KI-Kompetenz', status: 'crit',
+      sub: 'Schulungspflicht nicht erfüllt — seit Aug. 2025 verbindlich.' });
+    actions.push({ prio: 'sofort', title: 'KI-Schulungen für alle Mitarbeiter',
+      desc: 'Alle Mitarbeiter, die KI einsetzen, müssen angemessene KI-Kompetenz nachweisen können. BAFA-geförderte Schulung möglich (bis 50%).',
+      art: 'Art. 4 EU AI Act — In Kraft seit 2. Aug. 2025' });
+    actions.push({ prio: 'sofort', title: 'Interne KI-Policy erstellen',
+      desc: 'Schriftliche Richtlinie: welche KI-Tools dürfen wie eingesetzt werden, wer ist verantwortlich, wie werden Risiken bewertet.',
+      art: 'Art. 4 EU AI Act' });
+  } else if (art4Score <= 3) {
+    score -= 7;
+    articles.push({ art: 'Art. 4', title: 'KI-Kompetenz', status: 'warn',
+      sub: 'Teilweise erfüllt — Schulungen und Policy vervollständigen.' });
+    actions.push({ prio: 'aug26', title: 'KI-Schulungen vervollständigen',
+      desc: 'Restliche Mitarbeiter schulen und Policy finalisieren. Verantwortlichen benennen.',
+      art: 'Art. 4 EU AI Act' });
+  } else {
+    articles.push({ art: 'Art. 4', title: 'KI-Kompetenz', status: 'ok',
+      sub: 'Schulungspflicht erfüllt, Policy vorhanden.' });
+  }
+
+  // Hochrisiko
+  if (isHighRisk) {
+    // Technische Dokumentation
+    if (techdoc === 'nein') {
+      score -= 15;
+      articles.push({ art: 'Art. 11', title: 'Technische Dokumentation', status: 'crit',
+        sub: 'Pflichtdokumentation fehlt für Hochrisiko-KI.' });
+      actions.push({ prio: 'aug26', title: 'Technische Dokumentation erstellen',
+        desc: 'Für Hochrisiko-KI ist vollständige technische Doku Pflicht: Systembeschreibung, Trainingsdaten, Leistungsmetriken, Risikoanalyse.',
+        art: 'Art. 11 + Annex IV EU AI Act — Gilt ab 2. Aug. 2026' });
+    } else {
+      articles.push({ art: 'Art. 11', title: 'Technische Dokumentation', status: techdoc === 'ja' ? 'ok' : 'warn',
+        sub: techdoc === 'ja' ? 'Vollständig vorhanden.' : 'Dokumentation unvollständig — vervollständigen.' });
+    }
+
+    // Menschliche Aufsicht
+    if (oversight === 'nein') {
+      score -= 12;
+      articles.push({ art: 'Art. 14', title: 'Menschliche Aufsicht', status: 'crit',
+        sub: 'Keine menschliche Aufsicht — für Hochrisiko-KI Pflicht.' });
+      actions.push({ prio: 'aug26', title: 'Human-in-the-Loop implementieren',
+        desc: 'Hochrisiko-KI-Systeme müssen von natürlichen Personen überwacht werden können. Mindestens: Eingriffsmöglichkeit, Stopp-Funktion, regelmäßige Überprüfung.',
+        art: 'Art. 14 EU AI Act — Gilt ab 2. Aug. 2026' });
+    } else {
+      articles.push({ art: 'Art. 14', title: 'Menschliche Aufsicht', status: oversight === 'ja' ? 'ok' : 'warn',
+        sub: oversight === 'ja' ? 'Mensch im Loop vorhanden.' : 'Stichproben allein nicht ausreichend.' });
+    }
+
+    // Logging
+    if (logging === 'nein') {
+      score -= 8;
+      articles.push({ art: 'Art. 12', title: 'Protokollierung / Logging', status: 'warn',
+        sub: 'Keine Protokollierung — für Hochrisiko-KI Pflicht.' });
+      actions.push({ prio: 'aug26', title: 'Automatisches Logging einrichten',
+        desc: 'Alle relevanten Entscheidungen und Ereignisse müssen protokolliert werden. Logs müssen mind. 6 Monate aufbewahrt werden.',
+        art: 'Art. 12 EU AI Act' });
+    } else {
+      articles.push({ art: 'Art. 12', title: 'Protokollierung', status: 'ok', sub: 'Logging implementiert.' });
+    }
+
+    // DSFA
+    if (dsfa === 'nein') {
+      score -= 8;
+      actions.push({ prio: 'aug26', title: 'Datenschutz-Folgenabschätzung (DSFA) durchführen',
+        desc: 'Für Hochrisiko-KI mit Personendaten ist eine DSFA gem. DSGVO Art. 35 Pflicht. Datenschutzbeauftragten einbeziehen.',
+        art: 'DSGVO Art. 35 + EU AI Act Art. 26' });
+    }
+
+    // EU-Datenbank Registrierung
+    articles.push({ art: 'Art. 49', title: 'EU-Datenbank Registrierung', status: 'warn',
+      sub: 'Hochrisiko-KI muss in EU-Datenbank registriert werden (ab Aug. 2026).' });
+    actions.push({ prio: 'aug26', title: 'In EU-KI-Datenbank registrieren',
+      desc: 'Hochrisiko-KI-Systeme müssen vor Inbetriebnahme in der EU-Datenbank (KI-Verordnung Art. 49) registriert werden.',
+      art: 'Art. 49 EU AI Act — Gilt ab 2. Aug. 2026' });
+
+  } else {
+    articles.push({ art: 'Annex III', title: 'Hochrisiko-Klassifizierung', status: 'ok',
+      sub: 'Kein Hochrisiko-Anwendungsbereich identifiziert.' });
+  }
+
+  // Art. 50 — Transparenz
+  if (transparenz === 'nein') {
+    score -= 10;
+    articles.push({ art: 'Art. 50', title: 'Transparenz gegenüber Nutzern', status: 'crit',
+      sub: 'Nutzer werden nicht über KI-Einsatz informiert.' });
+    actions.push({ prio: 'sofort', title: 'KI-Kennzeichnungspflicht umsetzen',
+      desc: 'Nutzer müssen aktiv informiert werden, wenn sie mit einem KI-System interagieren. AGB-Hinweis allein reicht nicht aus.',
+      art: 'Art. 50 EU AI Act — In Kraft seit 2. Aug. 2026' });
+  } else if (transparenz === 'teilweise') {
+    score -= 4;
+    articles.push({ art: 'Art. 50', title: 'Transparenz gegenüber Nutzern', status: 'warn',
+      sub: 'Hinweis nur in AGB — aktive Kennzeichnung erforderlich.' });
+    actions.push({ prio: 'aug26', title: 'Aktive KI-Hinweisung implementieren',
+      desc: 'Der Transparenzhinweis muss beim ersten KI-Kontakt aktiv angezeigt werden, nicht nur in den AGB vergraben.',
+      art: 'Art. 50 EU AI Act' });
+  } else {
+    articles.push({ art: 'Art. 50', title: 'Transparenz gegenüber Nutzern', status: 'ok',
+      sub: transparenz === 'na' ? 'Kein direkter Nutzerkontakt — nicht relevant.' : 'Transparenzpflicht erfüllt.' });
+  }
+
+  // Synthetic Content
+  if (synthetic === 'ja_unmarkiert') {
+    score -= 10;
+    articles.push({ art: 'Art. 50 (4)', title: 'KI-generierte Inhalte', status: 'crit',
+      sub: 'Synthetische Inhalte werden nicht als KI-generiert gekennzeichnet.' });
+    actions.push({ prio: 'sofort', title: 'KI-generierte Inhalte kennzeichnen',
+      desc: 'Alle durch KI erzeugten Texte, Bilder, Audio und Videos müssen maschinenlesbar und für Nutzer erkennbar als KI-generiert markiert werden.',
+      art: 'Art. 50 Abs. 4 EU AI Act' });
+  } else if (synthetic === 'ja_markiert') {
+    articles.push({ art: 'Art. 50 (4)', title: 'KI-generierte Inhalte', status: 'ok',
+      sub: 'Kennzeichnung vorhanden.' });
+  }
+
+  // Laufende Maßnahmen
+  actions.push({ prio: 'laufend', title: 'Jährliche Compliance-Überprüfung',
+    desc: 'Die EU-KI-Verordnung entwickelt sich weiter. Jährliche Überprüfung und Anpassung der internen Prozesse empfohlen.',
+    art: 'EU AI Act — Laufende Pflicht' });
+  actions.push({ prio: 'laufend', title: 'KI-Risikomanagement dokumentieren',
+    desc: 'Kontinuierliche Risikoüberwachung und Dokumentation aller KI-relevanten Vorfälle und Anpassungen.',
+    art: 'Art. 9 EU AI Act' });
+
+  score = Math.max(0, Math.min(100, score));
+
+  // ─── Risk Class ────────────────────────────────────────────────────────────
+  let riskClass, riskLabel, riskSub;
+  if (hasProhibited) {
+    riskClass = 'verboten'; riskLabel = '⛔ Potenziell verboten';
+    riskSub = 'Sofortige rechtliche Prüfung erforderlich';
+  } else if (isHighRisk) {
+    riskClass = 'hoch'; riskLabel = '⚠️ Hochrisiko';
+    riskSub = 'Strenge Anforderungen ab August 2026';
+  } else if (U.aiact === 'begrenzt' || isGenAI) {
+    riskClass = 'begrenzt'; riskLabel = '🔵 Begrenzt';
+    riskSub = 'Transparenzpflichten anwendbar';
+  } else {
+    riskClass = 'minimal'; riskLabel = '✅ Minimales Risiko';
+    riskSub = 'Grundanforderungen gelten';
+  }
+
+  // ─── Render Results ────────────────────────────────────────────────────────
+  document.getElementById('aic-score-num').textContent = score;
+  const circumference = 301.6;
+  const offset = circumference - (score / 100) * circumference;
+  const ringColor = score >= 70 ? '#5d9e6e' : score >= 40 ? '#d4954a' : '#c0504a';
+  const ring = document.getElementById('aic-ring');
+  ring.setAttribute('stroke', ringColor);
+  setTimeout(() => ring.setAttribute('stroke-dashoffset', offset), 100);
+
+  const badge = document.getElementById('aic-risk-badge');
+  badge.textContent = riskLabel;
+  badge.className = 'compliance-risk-badge risk-' + riskClass;
+  document.getElementById('aic-risk-sub').textContent = riskSub;
+
+  // Articles
+  const statusIcon = { ok: '✓', warn: '~', crit: '!' };
+  document.getElementById('aic-articles').innerHTML = articles.map(a => `
+    <div class="article-row">
+      <div class="art-status art-${a.status}">${statusIcon[a.status]}</div>
+      <div>
+        <div class="art-title">${a.art} — ${a.title}</div>
+        <div class="art-sub">${a.sub}</div>
+      </div>
+    </div>`).join('');
+
+  // Actions sorted by priority
+  const prioOrder = { sofort: 0, aug26: 1, laufend: 2, ok: 3 };
+  actions.sort((a, b) => prioOrder[a.prio] - prioOrder[b.prio]);
+  const prioLabel = { sofort: '🔴 Sofort handeln', aug26: '🟡 Bis August 2026', laufend: '🔵 Laufend', ok: '✅ Erledigt' };
+  document.getElementById('aic-actions').innerHTML = actions.map(a => `
+    <div class="action-card action-${a.prio}">
+      <div class="action-deadline">${prioLabel[a.prio]}</div>
+      <div class="action-title">${a.title}</div>
+      <div class="action-desc">${a.desc}</div>
+      <div class="action-art">${a.art}</div>
+    </div>`).join('');
+
+  // Show results, scroll to top
+  document.getElementById('aic-results').style.display = 'block';
+  document.getElementById('main-content').scrollTop = 0;
+
+  // Store for report
+  window._aicData = { score, riskClass, riskLabel, riskSub, articles, actions };
+}
+
+function dlAIReport() {
+  const d = window._aicData;
+  if (!d) { runAICheck(); return; }
+  const prioLabel = { sofort: '🔴 Sofort', aug26: '🟡 Bis Aug. 2026', laufend: '🔵 Laufend', ok: '✅ OK' };
+  const statusLabel = { ok: '✅', warn: '⚠️', crit: '❌' };
+  const html = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Act Compliance Report — ${U.name}</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;color:#222;font-size:14px;line-height:1.6}
+.wrap{max-width:800px;margin:0 auto;padding:32px 24px}
+.cover{background:linear-gradient(135deg,#1a1200,#2a2000);border:1px solid #c8a96e;color:#fff;padding:36px 24px;border-radius:10px;margin-bottom:24px}
+.score-big{font-size:52px;font-weight:700;color:#c8a96e;line-height:1}
+h2{font-size:16px;font-weight:700;color:#1B3A5C;border-bottom:2px solid #C8A96E;padding-bottom:6px;margin:22px 0 12px}
+.art-row{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid #eee;font-size:13px}
+.art-row:last-child{border-bottom:none}
+.action{padding:12px 14px;border-left:4px solid;border-radius:0 6px 6px 0;margin-bottom:10px}
+.action-sofort{background:#FAEAEA;border-color:#A63232}
+.action-aug26{background:#FDF3DC;border-color:#B87A1A}
+.action-laufend{background:#D6E8F7;border-color:#2E6DA4}
+.action-title{font-weight:600;font-size:14px;margin-bottom:4px}
+.action-desc{font-size:13px;color:#444;margin-bottom:4px}
+.action-art{font-size:11px;color:#888}
+.print-btn{position:fixed;top:14px;right:14px;background:#1B3A5C;color:#fff;padding:10px 18px;border:none;border-radius:8px;font-size:13px;cursor:pointer}
+footer{background:#1B3A5C;color:rgba(255,255,255,.5);padding:12px 24px;font-size:11px;display:flex;justify-content:space-between;margin-top:24px}
+@media print{.print-btn{display:none}}
+</style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+</head><body>
+<button class="print-btn" onclick="window.print()">Als PDF drucken</button>
+<div class="wrap">
+<div class="cover">
+  <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(200,169,110,.8);margin-bottom:12px">EU AI Act Compliance Report · ${today()} · Vertraulich</div>
+  <div class="score-big">${d.score}</div>
+  <div style="font-size:14px;color:rgba(255,255,255,.7);margin-top:4px;margin-bottom:18px">Compliance-Score von 100</div>
+  <div style="font-size:20px;font-weight:700">${U.name}</div>
+  <div style="font-size:13px;color:rgba(255,255,255,.65);margin-top:4px">${U.ansprech} · ${U.ptitel}</div>
+  <div style="margin-top:16px;padding:8px 18px;background:rgba(255,255,255,.1);border-radius:20px;display:inline-block;font-weight:600">${d.riskLabel}</div>
+</div>
+<h2>Artikel-Status</h2>
+${d.articles.map(a => `<div class="art-row"><span style="width:22px">${statusLabel[a.status]}</span><div><strong>${a.art} — ${a.title}</strong><br><span style="font-size:12px;color:#666">${a.sub}</span></div></div>`).join('')}
+<h2>Handlungsempfehlungen</h2>
+${d.actions.map(a => `<div class="action action-${a.prio}"><div class="action-title">${prioLabel[a.prio]} — ${a.title}</div><div class="action-desc">${a.desc}</div><div class="action-art">${a.art}</div></div>`).join('')}
+</div>
+<footer><span>AI Act Compliance Report · ${U.name}</span><span>KI-Förder-Navigator 2026</span></footer>
+</body></html>`;
+  dlHTML(html, 'AI-Act-Compliance_' + U.name.replace(/[^a-zA-Z0-9]/g,'_') + '.html');
+}
+
+
+// ════════════════════════════════════════════════════════
+// ADMIN MODULE
+// ════════════════════════════════════════════════════════
+function showAdminTab(id) {
+  document.querySelectorAll('.admin-sub-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('admin-sub-' + id).classList.add('active');
   event.currentTarget.classList.add('active');
-  if (id === 'users') loadUsers();
-  if (id === 'dashboard') loadDashboard();
+  if (id === 'users') adminLoadUsers();
+  if (id === 'dashboard') adminLoadDashboard();
 }
 
-// ── LOAD DASHBOARD ──
-async function loadDashboard() {
-  const snap = await db.collection('licenses').get();
-  const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  const now = new Date();
-  const active = all.filter(l => l.active && (!l.expiresAt || l.expiresAt.toDate() > now));
-  const expired = all.filter(l => l.expiresAt && l.expiresAt.toDate() <= now);
-  const prices = { demo: 0, pro: 2400, enterprise: 9600 };
-  const arr = active.reduce((s, l) => s + (prices[l.tier] || 0), 0);
-
-  document.getElementById('kpi-total').textContent   = all.length;
-  document.getElementById('kpi-active').textContent  = active.length;
-  document.getElementById('kpi-expired').textContent = expired.length;
-  document.getElementById('kpi-arr').textContent     = arr.toLocaleString('de-DE') + ' €';
-
-  // Expiry warnings
-  const soon = active.filter(l => l.expiresAt && (l.expiresAt.toDate() - now) < 30*24*60*60*1000);
-  if (soon.length) {
-    document.getElementById('expiry-warn').style.display = 'block';
-    document.getElementById('expiry-warn').textContent = `⚠️ ${soon.length} Lizenz(en) läuft in < 30 Tagen ab — bitte verlängern.`;
-  }
-
-  // Tier distribution
-  const tiers = {};
-  all.forEach(l => tiers[l.tier] = (tiers[l.tier] || 0) + 1);
-  const colors = { demo: 'badge-demo', pro: 'badge-pro', enterprise: 'badge-enterprise' };
-  document.getElementById('tier-dist').innerHTML = Object.entries(tiers)
-    .map(([t, n]) => `<span class="badge ${colors[t] || ''}" style="font-size:13px;padding:6px 14px">${t}: ${n} Nutzer</span>`)
-    .join('');
-}
-
-// ── LOAD USERS ──
-async function loadUsers() {
-  const snap = await db.collection('licenses').get();
-  const now = new Date();
-  const rows = snap.docs.map(d => {
-    const l = d.data();
-    const exp = l.expiresAt ? l.expiresAt.toDate() : null;
-    const isExpired = exp && exp < now;
-    const statusClass = !l.active ? 'badge-inactive' : isExpired ? 'badge-expired' : 'badge-active';
-    const statusLabel = !l.active ? 'Inaktiv' : isExpired ? 'Abgelaufen' : 'Aktiv';
-    const tierClass = { demo: 'badge-demo', pro: 'badge-pro', enterprise: 'badge-enterprise' }[l.tier] || '';
-    const expStr = exp ? exp.toLocaleDateString('de-DE') : '—';
-    return `<tr>
-      <td><strong>${l.name || '—'}</strong><br><span style="font-size:11px;color:var(--text2)">${l.email || d.id}</span></td>
-      <td><span class="badge ${tierClass}">${l.tier || '—'}</span></td>
-      <td><span class="badge ${statusClass}">${statusLabel}</span></td>
-      <td>${expStr}</td>
-      <td style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-sm btn-secondary" onclick="extendLicense('${d.id}', '${l.tier}')">Verlängern</button>
-        <button class="btn btn-sm btn-danger" onclick="revokeLicense('${d.id}')">Sperren</button>
-      </td>
-    </tr>`;
-  });
-  document.getElementById('users-table-body').innerHTML = rows.join('') || 
-    '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">Keine Nutzer gefunden.</td></tr>';
-}
-
-// ── CREATE USER ──
-async function createUser() {
-  const email   = document.getElementById('nu-email').value.trim();
-  const pw      = document.getElementById('nu-pw').value;
-  const fname   = document.getElementById('nu-fname').value.trim();
-  const lname   = document.getElementById('nu-lname').value.trim();
-  const company = document.getElementById('nu-company').value.trim();
-  const tel     = document.getElementById('nu-tel').value.trim();
-  const tier    = document.getElementById('nu-tier').value;
-  const expiry  = document.getElementById('nu-expiry').value;
-  const price   = parseFloat(document.getElementById('nu-price').value) || 0;
-  const notes   = document.getElementById('nu-notes').value.trim();
-  const alertEl = document.getElementById('new-user-alert');
-
-  if (!email || !pw || !expiry) {
-    alertEl.innerHTML = '<div class="alert alert-err">Bitte E-Mail, Passwort und Ablaufdatum ausfüllen.</div>';
-    return;
-  }
-
-  alertEl.innerHTML = '<div class="alert alert-info">Nutzer wird angelegt...</div>';
-
+async function adminLoadDashboard() {
   try {
-    // Create user via Firebase Auth REST API
-    const apiKey = firebaseConfig.apiKey;
-    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: pw, returnSecureToken: true })
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
+    const snap = await db.collection('licenses').get();
+    const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const now = new Date();
+    const active = all.filter(l => l.active && (!l.expiresAt || l.expiresAt.toDate() > now));
+    const expired = all.filter(l => l.expiresAt && l.expiresAt.toDate() <= now);
+    const prices = { demo: 0, pro: 2400, enterprise: 9600 };
+    const arr = active.reduce((s, l) => s + (prices[l.tier] || 0), 0);
 
-    const uid = data.localId;
+    document.getElementById('a-kpi-total').textContent   = all.length;
+    document.getElementById('a-kpi-active').textContent  = active.length;
+    document.getElementById('a-kpi-expired').textContent = expired.length;
+    document.getElementById('a-kpi-arr').textContent     = arr.toLocaleString('de-DE') + ' €';
 
-    // Create license in Firestore
-    await db.collection('licenses').doc(uid).set({
-      email,
-      name: [fname, lname].filter(Boolean).join(' ') || email.split('@')[0],
-      company, tel, tier,
-      price,
-      notes,
-      active: true,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      expiresAt: firebase.firestore.Timestamp.fromDate(new Date(expiry))
-    });
+    const soon = active.filter(l => l.expiresAt && (l.expiresAt.toDate() - now) < 30*24*60*60*1000);
+    const warnEl = document.getElementById('a-expiry-warn');
+    if (soon.length) {
+      warnEl.innerHTML = `<div class="alert alert-warn">⚠️ ${soon.length} Lizenz(en) läuft in < 30 Tagen ab.</div>`;
+    } else { warnEl.innerHTML = ''; }
 
-    alertEl.innerHTML = `<div class="alert alert-ok">✓ Nutzer "${email}" erfolgreich angelegt! Tier: ${tier}, läuft ab: ${expiry}</div>`;
-    clearNewUserForm();
-    loadDashboard();
-  } catch(e) {
-    const msgs = {
-      'EMAIL_EXISTS': 'Diese E-Mail ist bereits registriert.',
-      'WEAK_PASSWORD : Password should be at least 6 characters': 'Passwort muss mind. 6 Zeichen haben.',
-    };
-    alertEl.innerHTML = `<div class="alert alert-err">Fehler: ${msgs[e.message] || e.message}</div>`;
-  }
+    const tiers = {};
+    all.forEach(l => tiers[l.tier] = (tiers[l.tier] || 0) + 1);
+    const tc = { demo: 'badge-mittel', pro: 'badge-hoch', enterprise: 'badge-eu' };
+    document.getElementById('a-tier-dist').innerHTML = Object.entries(tiers)
+      .map(([t, n]) => `<span class="badge ${tc[t] || ''}" style="font-size:12px;padding:5px 12px">${t}: ${n}</span>`).join('');
+  } catch(e) { console.log('Admin dashboard error:', e); }
 }
 
-// ── EXTEND LICENSE ──
-async function extendLicense(uid, currentTier) {
+async function adminLoadUsers() {
+  try {
+    const snap = await db.collection('licenses').get();
+    const now = new Date();
+    if (snap.empty) {
+      document.getElementById('a-users-list').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">Noch keine Nutzer.</div>';
+      return;
+    }
+    document.getElementById('a-users-list').innerHTML = snap.docs.map(d => {
+      const l = d.data();
+      const exp = l.expiresAt ? l.expiresAt.toDate() : null;
+      const isExp = exp && exp < now;
+      const statusClass = !l.active ? 'badge-mittel' : isExp ? 'badge-mittel' : 'badge-hoch';
+      const statusLabel = !l.active ? 'Inaktiv' : isExp ? 'Abgelaufen' : 'Aktiv';
+      const tierC = { demo: 'badge-mittel', pro: 'badge-hoch', enterprise: 'badge-eu' }[l.tier] || '';
+      return `<div class="user-row">
+        <div class="user-row-top">
+          <div>
+            <div class="user-name">${l.name || '—'} <span class="badge ${tierC}">${l.tier||'—'}</span></div>
+            <div class="user-email">${l.email || d.id}</div>
+          </div>
+          <span class="badge ${statusClass}">${statusLabel}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text3)">Läuft ab: ${exp ? exp.toLocaleDateString('de-DE') : '—'}</div>
+        <div class="user-row-actions">
+          <button class="btn btn-secondary" style="font-size:11px;padding:6px 12px" onclick="adminExtend('${d.id}')">Verlängern</button>
+          <button class="btn" style="font-size:11px;padding:6px 12px;background:var(--red-bg);color:#e08080;border:1px solid rgba(192,80,74,.3)" onclick="adminRevoke('${d.id}')">Sperren</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { console.log('Load users error:', e); }
+}
+
+async function adminExtend(uid) {
   const months = prompt('Verlängerung um wie viele Monate?', '12');
-  if (!months) return;
+  if (!months || isNaN(months)) return;
   const doc = await db.collection('licenses').doc(uid).get();
   const current = doc.data().expiresAt ? doc.data().expiresAt.toDate() : new Date();
   const newExp = new Date(current);
@@ -441,46 +2239,76 @@ async function extendLicense(uid, currentTier) {
     expiresAt: firebase.firestore.Timestamp.fromDate(newExp),
     active: true
   });
-  document.getElementById('users-alert').innerHTML = `<div class="alert alert-ok">Lizenz verlängert bis ${newExp.toLocaleDateString('de-DE')}</div>`;
-  loadUsers();
-  loadDashboard();
+  document.getElementById('a-users-alert').innerHTML = `<div class="alert alert-ok">✓ Verlängert bis ${newExp.toLocaleDateString('de-DE')}</div>`;
+  adminLoadUsers();
+  adminLoadDashboard();
 }
 
-// ── REVOKE LICENSE ──
-async function revokeLicense(uid) {
+async function adminRevoke(uid) {
   if (!confirm('Zugang wirklich sperren?')) return;
   await db.collection('licenses').doc(uid).update({ active: false });
-  document.getElementById('users-alert').innerHTML = '<div class="alert alert-ok">Zugang gesperrt.</div>';
-  loadUsers();
-  loadDashboard();
+  document.getElementById('a-users-alert').innerHTML = '<div class="alert alert-ok">Zugang gesperrt.</div>';
+  adminLoadUsers();
+  adminLoadDashboard();
 }
 
-// ── HELPERS ──
-function clearNewUserForm() {
-  ['nu-fname','nu-lname','nu-email','nu-pw','nu-company','nu-tel','nu-notes','nu-price'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  document.getElementById('nu-tier').value = 'demo';
-  updatePrice();
-  setDefaultExpiry();
-}
-
-function updatePrice() {
+function adminUpdatePrice() {
   const prices = { demo: 0, pro: 2400, enterprise: 9600 };
-  const tier = document.getElementById('nu-tier').value;
-  document.getElementById('nu-price').value = prices[tier] || 0;
-  setDefaultExpiry();
-}
-
-function setDefaultExpiry() {
-  const tier = document.getElementById('nu-tier').value;
+  const tier = document.getElementById('a-tier').value;
+  document.getElementById('a-price').value = prices[tier] || 0;
   const days = { demo: 30, pro: 365, enterprise: 365 }[tier] || 365;
   const d = new Date(); d.setDate(d.getDate() + days);
-  document.getElementById('nu-expiry').value = d.toISOString().split('T')[0];
+  document.getElementById('a-expiry').value = d.toISOString().split('T')[0];
 }
 
-// Init
-setDefaultExpiry();
+async function adminCreateUser() {
+  const email   = document.getElementById('a-email').value.trim();
+  const pw      = document.getElementById('a-pw').value;
+  const fname   = document.getElementById('a-fname').value.trim();
+  const lname   = document.getElementById('a-lname').value.trim();
+  const company = document.getElementById('a-company').value.trim();
+  const tier    = document.getElementById('a-tier').value;
+  const expiry  = document.getElementById('a-expiry').value;
+  const price   = parseFloat(document.getElementById('a-price').value) || 0;
+  const notes   = document.getElementById('a-notes').value.trim();
+  const alertEl = document.getElementById('a-new-alert');
+
+  if (!email || !pw || !expiry) {
+    alertEl.innerHTML = '<div class="alert alert-warn">Bitte E-Mail, Passwort und Ablaufdatum ausfüllen.</div>';
+    return;
+  }
+  alertEl.innerHTML = '<div class="alert alert-info">Wird angelegt...</div>';
+  try {
+    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${firebaseConfig.apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pw, returnSecureToken: true })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    await db.collection('licenses').doc(data.localId).set({
+      email, name: [fname, lname].filter(Boolean).join(' ') || email.split('@')[0],
+      company, tier, price, notes, active: true,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      expiresAt: firebase.firestore.Timestamp.fromDate(new Date(expiry))
+    });
+    alertEl.innerHTML = `<div class="alert alert-ok">✓ ${email} angelegt! Tier: ${tier}, Ablauf: ${expiry}</div>`;
+    ['a-fname','a-lname','a-email','a-pw','a-company','a-notes'].forEach(id => document.getElementById(id).value = '');
+    adminUpdatePrice();
+    adminLoadDashboard();
+  } catch(e) {
+    const msgs = { 'EMAIL_EXISTS': 'E-Mail bereits registriert.' };
+    alertEl.innerHTML = `<div class="alert alert-warn">Fehler: ${msgs[e.message] || e.message}</div>`;
+  }
+}
+
+// Init admin form defaults
+(function() {
+  const d = new Date(); d.setDate(d.getDate() + 30);
+  const el = document.getElementById('a-expiry');
+  if (el) el.value = d.toISOString().split('T')[0];
+})();
+
 </script>
 </body>
 </html>
