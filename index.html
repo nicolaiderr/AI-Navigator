@@ -1261,9 +1261,9 @@ textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 
       <!-- Sub-Navigation -->
       <div class="admin-section-tabs">
-        <button class="admin-tab active" onclick="showAdminTab('dashboard')">Dashboard</button>
-        <button class="admin-tab" onclick="showAdminTab('users')">Nutzer</button>
-        <button class="admin-tab" onclick="showAdminTab('new')">+ Neu</button>
+        <button class="admin-tab active" onclick="showAdminTab('dashboard', this)">Dashboard</button>
+        <button class="admin-tab" onclick="showAdminTab('users', this)">Nutzer</button>
+        <button class="admin-tab" onclick="showAdminTab('new', this)">+ Neu</button>
       </div>
 
       <!-- Dashboard -->
@@ -1429,6 +1429,7 @@ async function checkLicense(user) {
 
 function showApp(user, lic) {
   document.getElementById('auth-overlay').style.display = 'none';
+  adminInitForm();
   document.getElementById('license-expired').style.display = 'none';
   document.getElementById('app-shell').style.display = '';
   // Show admin tab if admin
@@ -2157,11 +2158,11 @@ ${d.actions.map(a => `<div class="action action-${a.prio}"><div class="action-ti
 // ════════════════════════════════════════════════════════
 // ADMIN MODULE
 // ════════════════════════════════════════════════════════
-function showAdminTab(id) {
+function showAdminTab(id, el) {
   document.querySelectorAll('.admin-sub-page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('admin-sub-' + id).classList.add('active');
-  event.currentTarget.classList.add('active');
+  if (el) el.classList.add('active');
   if (id === 'users') adminLoadUsers();
   if (id === 'dashboard') adminLoadDashboard();
 }
@@ -2302,12 +2303,12 @@ async function adminCreateUser() {
   }
 }
 
-// Init admin form defaults
-(function() {
+// Init admin form defaults on demand
+function adminInitForm() {
   const d = new Date(); d.setDate(d.getDate() + 30);
   const el = document.getElementById('a-expiry');
   if (el) el.value = d.toISOString().split('T')[0];
-})();
+}
 
 </script>
 </body>
