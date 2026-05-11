@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KI-Navigator — Admin</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0e0f11;color:#f0ede8;min-height:100vh;font-size:14px}
+:root{
+  --gold:#c8a96e;--gold2:#e8c98e;--bg2:#15171a;--bg3:#1c1f24;--bg4:#22262d;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text2:#9a9590;--text3:#5c5854;
+  --green:#5d9e6e;--green-bg:rgba(93,158,110,0.12);
+  --amber:#d4954a;--amber-bg:rgba(212,149,74,0.12);
+  --red:#c0504a;--red-bg:rgba(192,80,74,0.12);
+  --blue:#4a7fc0;--blue-bg:rgba(74,127,192,0.12);
+}
+
+/* ─── AUTH ─── */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px}
+.login-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:36px;width:100%;max-width:380px}
+.login-title{font-size:22px;font-weight:700;color:var(--gold);margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--text3);margin-bottom:28px}
+
+/* ─── LAYOUT ─── */
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:28px 16px}
+.sidebar-logo{font-size:16px;font-weight:700;color:var(--gold);margin-bottom:4px}
+.sidebar-sub{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:28px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;border:none;background:none;width:100%;text-align:left;margin-bottom:4px}
+.nav-item:hover{background:var(--bg3);color:#f0ede8}
+.nav-item.active{background:rgba(200,169,110,.1);color:var(--gold)}
+.main{padding:36px 32px;overflow-y:auto}
+.page{display:none}.page.active{display:block}
+
+/* ─── COMPONENTS ─── */
+.page-title{font-size:24px;font-weight:700;color:#f0ede8;margin-bottom:6px}
+.page-sub{font-size:13px;color:var(--text2);margin-bottom:28px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px}
+.card-title{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);margin-bottom:16px}
+input,select{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:#f0ede8;font-family:inherit;font-size:14px;padding:10px 13px;outline:none;width:100%}
+input:focus,select:focus{border-color:var(--gold)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-row.c3{grid-template-columns:1fr 1fr 1fr}
+.form-group label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--gold);color:#0e0f11}
+.btn-primary:hover{background:var(--gold2)}
+.btn-secondary{background:var(--bg3);color:var(--text2);border:1px solid var(--border2)}
+.btn-secondary:hover{color:#f0ede8}
+.btn-danger{background:var(--red-bg);color:#e08080;border:1px solid rgba(192,80,74,.3)}
+.btn-danger:hover{background:rgba(192,80,74,.2)}
+.btn-sm{padding:6px 12px;font-size:12px}
+
+/* ─── TABLE ─── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border2);background:var(--bg3)}
+td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;color:#f0ede8}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* ─── BADGES ─── */
+.badge{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:500}
+.badge-demo{background:var(--amber-bg);color:#e8b06a;border:1px solid rgba(212,149,74,.3)}
+.badge-pro{background:var(--green-bg);color:#7ec88e;border:1px solid rgba(93,158,110,.3)}
+.badge-enterprise{background:var(--blue-bg);color:#7aaddf;border:1px solid rgba(74,127,192,.3)}
+.badge-active{background:var(--green-bg);color:#7ec88e}
+.badge-expired{background:var(--red-bg);color:#e08080}
+.badge-inactive{background:var(--bg4);color:var(--text3)}
+
+/* ─── KPI ─── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.kpi-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center}
+.kpi-val{font-size:32px;font-weight:700;color:var(--gold)}
+.kpi-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-top:4px}
+
+/* ─── ALERTS ─── */
+.alert{padding:12px 14px;border-radius:8px;font-size:13px;margin-bottom:14px}
+.alert-ok{background:var(--green-bg);border:1px solid rgba(93,158,110,.25);color:#7ec88e}
+.alert-err{background:var(--red-bg);border:1px solid rgba(192,80,74,.25);color:#e08080}
+.alert-info{background:var(--blue-bg);border:1px solid rgba(74,127,192,.25);color:#7aaddf}
+
+/* ─── MISC ─── */
+.logout-btn{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;cursor:pointer;color:var(--text3);font-size:12px;border:none;background:none;width:100%;margin-top:auto}
+.logout-btn:hover{color:#e08080;background:var(--red-bg)}
+.sidebar-inner{display:flex;flex-direction:column;height:100%}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen" class="login-wrap">
+  <div class="login-box">
+    <div class="login-title">Admin-Panel</div>
+    <div class="login-sub">KI-Förder-Navigator · Lizenzverwaltung</div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>E-Mail</label>
+      <input type="email" id="adm-email" placeholder="admin@ihre-domain.de" autocomplete="email">
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label>Passwort</label>
+      <input type="password" id="adm-pw" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="adminLogin()">Anmelden</button>
+    <div id="login-err" style="color:#e08080;font-size:12px;text-align:center;margin-top:10px;min-height:18px"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="admin-app" class="shell" style="display:none">
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+      <div>
+        <div class="sidebar-logo">KI-Navigator</div>
+        <div class="sidebar-sub">Admin · <span id="adm-user-name">—</span></div>
+        <button class="nav-item active" onclick="showAdminPage('dashboard')">📊 Dashboard</button>
+        <button class="nav-item" onclick="showAdminPage('users')">👥 Nutzer &amp; Lizenzen</button>
+        <button class="nav-item" onclick="showAdminPage('new-user')">➕ Neuer Nutzer</button>
+        <button class="nav-item" onclick="showAdminPage('pricing')">💶 Preismodell</button>
+      </div>
+      <button class="logout-btn" onclick="adminLogout()">↩ Abmelden</button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div id="admin-page-dashboard" class="page active">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Übersicht aller aktiven Lizenzen</div>
+      <div class="kpi-row">
+        <div class="kpi-box"><div class="kpi-val" id="kpi-total">—</div><div class="kpi-lbl">Nutzer gesamt</div></div>
+        <div class="kpi-box"><div class="kpi-val" id="kpi-active">—</div><div class="kpi-lbl">Aktive Lizenzen</div></div>
+        <div class="kpi-box"><div class="kpi-val" id="kpi-expired">—</div><div class="kpi-lbl">Abgelaufen</div></div>
+        <div class="kpi-box"><div class="kpi-val" id="kpi-arr" style="font-size:22px">—</div><div class="kpi-lbl">Jahresumsatz (€)</div></div>
+      </div>
+      <div class="alert alert-info" id="expiry-warn" style="display:none"></div>
+      <div class="card">
+        <div class="card-title">Lizenz-Verteilung</div>
+        <div id="tier-dist" style="display:flex;gap:10px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div id="admin-page-users" class="page">
+      <div class="page-title">Nutzer &amp; Lizenzen</div>
+      <div class="page-sub">Alle registrierten Nutzer verwalten</div>
+      <div id="users-alert"></div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Name / E-Mail</th>
+              <th>Tier</th>
+              <th>Status</th>
+              <th>Läuft ab</th>
+              <th>Aktionen</th>
+            </tr></thead>
+            <tbody id="users-table-body">
+              <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">Wird geladen...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW USER -->
+    <div id="admin-page-new-user" class="page">
+      <div class="page-title">Neuer Nutzer</div>
+      <div class="page-sub">Konto anlegen und Lizenz zuweisen</div>
+      <div id="new-user-alert"></div>
+      <div class="card">
+        <div class="card-title">Nutzerdaten</div>
+        <div class="form-row">
+          <div class="form-group"><label>Vorname</label><input type="text" id="nu-fname" placeholder="Max"></div>
+          <div class="form-group"><label>Nachname</label><input type="text" id="nu-lname" placeholder="Müller"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>E-Mail *</label><input type="email" id="nu-email" placeholder="max@firma.de"></div>
+          <div class="form-group"><label>Temporäres Passwort *</label><input type="text" id="nu-pw" placeholder="Sicheres Passwort"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Unternehmen</label><input type="text" id="nu-company" placeholder="Muster GmbH"></div>
+          <div class="form-group"><label>Telefon</label><input type="text" id="nu-tel" placeholder="+49 69 123456"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Lizenz</div>
+        <div class="form-row c3">
+          <div class="form-group">
+            <label>Lizenz-Tier *</label>
+            <select id="nu-tier" onchange="updatePrice()">
+              <option value="demo">Demo (30 Tage, kostenlos)</option>
+              <option value="pro">Professional (€2.400/Jahr)</option>
+              <option value="enterprise">Enterprise (€9.600/Jahr)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Ablaufdatum *</label>
+            <input type="date" id="nu-expiry">
+          </div>
+          <div class="form-group">
+            <label>Lizenzwert (€)</label>
+            <input type="number" id="nu-price" placeholder="2400">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:6px">
+          <label>Notizen (intern)</label>
+          <input type="text" id="nu-notes" placeholder="z. B. Kontaktperson, Vertragsnummer">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary" onclick="createUser()">Nutzer anlegen &amp; Lizenz aktivieren</button>
+        <button class="btn btn-secondary" onclick="clearNewUserForm()">Zurücksetzen</button>
+      </div>
+    </div>
+
+    <!-- PRICING -->
+    <div id="admin-page-pricing" class="page">
+      <div class="page-title">Preismodell</div>
+      <div class="page-sub">Übersicht der Lizenz-Tiers und Leistungsmerkmale</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+        <div class="card" style="border-color:rgba(212,149,74,.3)">
+          <div style="font-size:10px;color:#e8b06a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Demo</div>
+          <div style="font-size:28px;font-weight:700;color:var(--gold);margin-bottom:4px">Kostenlos</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:18px">30 Tage Testzugang</div>
+          <div style="font-size:12px;color:var(--text2);line-height:2">✓ Förderanalyse<br>✓ AI Act Check<br>✓ KI-Readiness Report<br>✗ Antragsformulare<br>✗ Admin-Support</div>
+        </div>
+        <div class="card" style="border-color:rgba(93,158,110,.3)">
+          <div style="font-size:10px;color:#7ec88e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Professional</div>
+          <div style="font-size:28px;font-weight:700;color:var(--gold);margin-bottom:4px">€2.400<span style="font-size:14px;font-weight:400;color:var(--text2)">/Jahr</span></div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:18px">€200/Monat · zzgl. MwSt.</div>
+          <div style="font-size:12px;color:var(--text2);line-height:2">✓ Förderanalyse<br>✓ AI Act Check<br>✓ KI-Readiness Report<br>✓ Alle Antragsformulare<br>✓ Halbjährl. Datenbankupdate</div>
+        </div>
+        <div class="card" style="border-color:rgba(74,127,192,.3)">
+          <div style="font-size:10px;color:#7aaddf;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Enterprise</div>
+          <div style="font-size:28px;font-weight:700;color:var(--gold);margin-bottom:4px">€9.600<span style="font-size:14px;font-weight:400;color:var(--text2)">/Jahr</span></div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:18px">Eigenes Branding · zzgl. MwSt.</div>
+          <div style="font-size:12px;color:var(--text2);line-height:2">✓ Alle Pro-Features<br>✓ White-Label (eigenes Logo)<br>✓ Unbegrenzte Nutzer<br>✓ Quartärl. Datenbankupdate<br>✓ Priority-Support</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── FIREBASE CONFIG — GLEICHE WERTE WIE IN index.html ──
+const firebaseConfig = {
+  apiKey:            "AIzaSyBS8cartpLB73uBZ02oL-o20YQlaDjhW4w",
+  authDomain:        "ai-navigator-2edae.firebaseapp.com",
+  projectId:         "ai-navigator-2edae",
+  storageBucket:     "ai-navigator-2edae.firebasestorage.app",
+  messagingSenderId: "274149155623",
+  appId:             "1:274149155623:web:579f27bbd48abbeb497f02"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ── ADMIN EMAIL (nur dieser Nutzer sieht das Admin-Panel) ──
+const ADMIN_EMAIL = "nicolai.derr@gmail.com";
+
+// ── AUTH ──
+auth.onAuthStateChanged(user => {
+  if (user && user.email === ADMIN_EMAIL) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-app').style.display = 'grid';
+    document.getElementById('adm-user-name').textContent = user.email.split('@')[0];
+    loadDashboard();
+    loadUsers();
+  } else if (user) {
+    auth.signOut();
+    document.getElementById('login-err').textContent = 'Kein Admin-Zugang.';
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('admin-app').style.display = 'none';
+  }
+});
+
+async function adminLogin() {
+  const email = document.getElementById('adm-email').value.trim();
+  const pw    = document.getElementById('adm-pw').value;
+  document.getElementById('login-err').textContent = '';
+  try {
+    await auth.signInWithEmailAndPassword(email, pw);
+  } catch(e) {
+    document.getElementById('login-err').textContent = 'Anmeldung fehlgeschlagen: ' + (e.message || e.code);
+  }
+}
+
+async function adminLogout() {
+  await auth.signOut();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') adminLogin();
+});
+
+// ── NAVIGATION ──
+function showAdminPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('admin-page-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (id === 'users') loadUsers();
+  if (id === 'dashboard') loadDashboard();
+}
+
+// ── LOAD DASHBOARD ──
+async function loadDashboard() {
+  const snap = await db.collection('licenses').get();
+  const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const now = new Date();
+  const active = all.filter(l => l.active && (!l.expiresAt || l.expiresAt.toDate() > now));
+  const expired = all.filter(l => l.expiresAt && l.expiresAt.toDate() <= now);
+  const prices = { demo: 0, pro: 2400, enterprise: 9600 };
+  const arr = active.reduce((s, l) => s + (prices[l.tier] || 0), 0);
+
+  document.getElementById('kpi-total').textContent   = all.length;
+  document.getElementById('kpi-active').textContent  = active.length;
+  document.getElementById('kpi-expired').textContent = expired.length;
+  document.getElementById('kpi-arr').textContent     = arr.toLocaleString('de-DE') + ' €';
+
+  // Expiry warnings
+  const soon = active.filter(l => l.expiresAt && (l.expiresAt.toDate() - now) < 30*24*60*60*1000);
+  if (soon.length) {
+    document.getElementById('expiry-warn').style.display = 'block';
+    document.getElementById('expiry-warn').textContent = `⚠️ ${soon.length} Lizenz(en) läuft in < 30 Tagen ab — bitte verlängern.`;
+  }
+
+  // Tier distribution
+  const tiers = {};
+  all.forEach(l => tiers[l.tier] = (tiers[l.tier] || 0) + 1);
+  const colors = { demo: 'badge-demo', pro: 'badge-pro', enterprise: 'badge-enterprise' };
+  document.getElementById('tier-dist').innerHTML = Object.entries(tiers)
+    .map(([t, n]) => `<span class="badge ${colors[t] || ''}" style="font-size:13px;padding:6px 14px">${t}: ${n} Nutzer</span>`)
+    .join('');
+}
+
+// ── LOAD USERS ──
+async function loadUsers() {
+  const snap = await db.collection('licenses').get();
+  const now = new Date();
+  const rows = snap.docs.map(d => {
+    const l = d.data();
+    const exp = l.expiresAt ? l.expiresAt.toDate() : null;
+    const isExpired = exp && exp < now;
+    const statusClass = !l.active ? 'badge-inactive' : isExpired ? 'badge-expired' : 'badge-active';
+    const statusLabel = !l.active ? 'Inaktiv' : isExpired ? 'Abgelaufen' : 'Aktiv';
+    const tierClass = { demo: 'badge-demo', pro: 'badge-pro', enterprise: 'badge-enterprise' }[l.tier] || '';
+    const expStr = exp ? exp.toLocaleDateString('de-DE') : '—';
+    return `<tr>
+      <td><strong>${l.name || '—'}</strong><br><span style="font-size:11px;color:var(--text2)">${l.email || d.id}</span></td>
+      <td><span class="badge ${tierClass}">${l.tier || '—'}</span></td>
+      <td><span class="badge ${statusClass}">${statusLabel}</span></td>
+      <td>${expStr}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-secondary" onclick="extendLicense('${d.id}', '${l.tier}')">Verlängern</button>
+        <button class="btn btn-sm btn-danger" onclick="revokeLicense('${d.id}')">Sperren</button>
+      </td>
+    </tr>`;
+  });
+  document.getElementById('users-table-body').innerHTML = rows.join('') || 
+    '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">Keine Nutzer gefunden.</td></tr>';
+}
+
+// ── CREATE USER ──
+async function createUser() {
+  const email   = document.getElementById('nu-email').value.trim();
+  const pw      = document.getElementById('nu-pw').value;
+  const fname   = document.getElementById('nu-fname').value.trim();
+  const lname   = document.getElementById('nu-lname').value.trim();
+  const company = document.getElementById('nu-company').value.trim();
+  const tel     = document.getElementById('nu-tel').value.trim();
+  const tier    = document.getElementById('nu-tier').value;
+  const expiry  = document.getElementById('nu-expiry').value;
+  const price   = parseFloat(document.getElementById('nu-price').value) || 0;
+  const notes   = document.getElementById('nu-notes').value.trim();
+  const alertEl = document.getElementById('new-user-alert');
+
+  if (!email || !pw || !expiry) {
+    alertEl.innerHTML = '<div class="alert alert-err">Bitte E-Mail, Passwort und Ablaufdatum ausfüllen.</div>';
+    return;
+  }
+
+  alertEl.innerHTML = '<div class="alert alert-info">Nutzer wird angelegt...</div>';
+
+  try {
+    // Create user via Firebase Auth REST API
+    const apiKey = firebaseConfig.apiKey;
+    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pw, returnSecureToken: true })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const uid = data.localId;
+
+    // Create license in Firestore
+    await db.collection('licenses').doc(uid).set({
+      email,
+      name: [fname, lname].filter(Boolean).join(' ') || email.split('@')[0],
+      company, tel, tier,
+      price,
+      notes,
+      active: true,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      expiresAt: firebase.firestore.Timestamp.fromDate(new Date(expiry))
+    });
+
+    alertEl.innerHTML = `<div class="alert alert-ok">✓ Nutzer "${email}" erfolgreich angelegt! Tier: ${tier}, läuft ab: ${expiry}</div>`;
+    clearNewUserForm();
+    loadDashboard();
+  } catch(e) {
+    const msgs = {
+      'EMAIL_EXISTS': 'Diese E-Mail ist bereits registriert.',
+      'WEAK_PASSWORD : Password should be at least 6 characters': 'Passwort muss mind. 6 Zeichen haben.',
+    };
+    alertEl.innerHTML = `<div class="alert alert-err">Fehler: ${msgs[e.message] || e.message}</div>`;
+  }
+}
+
+// ── EXTEND LICENSE ──
+async function extendLicense(uid, currentTier) {
+  const months = prompt('Verlängerung um wie viele Monate?', '12');
+  if (!months) return;
+  const doc = await db.collection('licenses').doc(uid).get();
+  const current = doc.data().expiresAt ? doc.data().expiresAt.toDate() : new Date();
+  const newExp = new Date(current);
+  newExp.setMonth(newExp.getMonth() + parseInt(months));
+  await db.collection('licenses').doc(uid).update({
+    expiresAt: firebase.firestore.Timestamp.fromDate(newExp),
+    active: true
+  });
+  document.getElementById('users-alert').innerHTML = `<div class="alert alert-ok">Lizenz verlängert bis ${newExp.toLocaleDateString('de-DE')}</div>`;
+  loadUsers();
+  loadDashboard();
+}
+
+// ── REVOKE LICENSE ──
+async function revokeLicense(uid) {
+  if (!confirm('Zugang wirklich sperren?')) return;
+  await db.collection('licenses').doc(uid).update({ active: false });
+  document.getElementById('users-alert').innerHTML = '<div class="alert alert-ok">Zugang gesperrt.</div>';
+  loadUsers();
+  loadDashboard();
+}
+
+// ── HELPERS ──
+function clearNewUserForm() {
+  ['nu-fname','nu-lname','nu-email','nu-pw','nu-company','nu-tel','nu-notes','nu-price'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('nu-tier').value = 'demo';
+  updatePrice();
+  setDefaultExpiry();
+}
+
+function updatePrice() {
+  const prices = { demo: 0, pro: 2400, enterprise: 9600 };
+  const tier = document.getElementById('nu-tier').value;
+  document.getElementById('nu-price').value = prices[tier] || 0;
+  setDefaultExpiry();
+}
+
+function setDefaultExpiry() {
+  const tier = document.getElementById('nu-tier').value;
+  const days = { demo: 30, pro: 365, enterprise: 365 }[tier] || 365;
+  const d = new Date(); d.setDate(d.getDate() + days);
+  document.getElementById('nu-expiry').value = d.toISOString().split('T')[0];
+}
+
+// Init
+setDefaultExpiry();
+</script>
+</body>
+</html>
